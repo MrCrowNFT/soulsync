@@ -8,7 +8,7 @@ const memorySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    mood: {
+    memory: {
       type: String,
       required: true,
     },
