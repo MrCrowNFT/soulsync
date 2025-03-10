@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
+import { type IMoodEntry } from "@/types/moodEntry";
 
 //mongoose schema
-const moodEntrySchema = new mongoose.Schema(
+const moodEntrySchema = new mongoose.Schema<IMoodEntry>(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -28,5 +29,6 @@ const moodEntrySchema = new mongoose.Schema(
 moodEntrySchema.index({ userId: 1 });
 
 //to  ensures that the model is reused if it already exists (for hot reloading).
-export const MoodEntryModel =
-  mongoose.models.MoodEntry ?? mongoose.model("MoodEntry", moodEntrySchema);
+export const MoodEntryModel: Model<IMoodEntry> =
+  mongoose.models.MoodEntry ??
+  mongoose.model<IMoodEntry>("MoodEntry", moodEntrySchema);
