@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { Model } from "mongoose";
+import { IMemory } from "@/types/memory";
 
 //mongoose schema
-const memorySchema = new mongoose.Schema(
+const memorySchema = new mongoose.Schema<IMemory>(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -22,5 +23,5 @@ const memorySchema = new mongoose.Schema(
 memorySchema.index({ userId: 1 });
 
 //to  ensures that the model is reused if it already exists (for hot reloading).
-export const MemoryModel =
-  mongoose.models.MemoryModel ?? mongoose.model("Memory", memorySchema);
+export const MemoryModel: Model<IMemory> =
+  mongoose.models.Memory ?? mongoose.model<IMemory>("Memory", memorySchema);
