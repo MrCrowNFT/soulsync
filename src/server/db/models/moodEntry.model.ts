@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 //mongoose schema
 const moodEntrySchema = new mongoose.Schema(
   {
