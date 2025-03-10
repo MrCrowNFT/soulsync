@@ -1,5 +1,5 @@
-import mongoose, { Model } from "mongoose";
-import { IMemory } from "@/types/memory";
+import mongoose, { type Model } from "mongoose";
+import { type IMemory } from "@/types/memory";
 
 //mongoose schema
 const memorySchema = new mongoose.Schema<IMemory>(

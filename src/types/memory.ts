@@ -1,4 +1,5 @@
-import mongoose, { Document } from "mongoose";
+import {type Document} from "mongoose";
+import type mongoose from "mongoose";
 
 // Define the interface for TypeScript
 export interface IMemory extends Document {
