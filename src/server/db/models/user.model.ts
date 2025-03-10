@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { MoodEntrySchema } from "./moodEntry.model";
+import { IUser, IUserModel } from "../../../types/user";
 
 //zod schema validation
 export const UserSchema = z.object({
@@ -36,25 +37,6 @@ export const UserPublicSchema = UserSchema.omit({ password: true });
 //TypeScript types
 export type User = z.infer<typeof UserSchema>;
 export type UserPublic = z.infer<typeof UserPublicSchema>;
-
-// Mongoose interfaces
-export interface IUser extends mongoose.Document {
-  name: string;
-  lastName: string;
-  username: string;
-  gender: "male" | "female" | "non-binary" | "other" | "prefer-not-to-say";
-  birthDate: Date;
-  email: string;
-  password: string;
-  photo: string;
-  moodEntries: mongoose.Types.ObjectId[];
-  memories?: mongoose.Types.ObjectId[];
-  comparePassword(enteredPassword: string): Promise<boolean>;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IUserModel extends mongoose.Model<IUser> {}
 
 // MongoDB schema
 const userSchema = new mongoose.Schema<IUser>(
