@@ -1,29 +1,35 @@
-# Create T3 App
+# SoulSync
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A personalized mental health support using AI chatbots, mood tracking, and therapy recommendations.
 
-## What's next? How do I make an app with this?
+In this world where mental health awareness is growing, and there’s a shortage of therapists globally, we strive to combine AI expertise with healthcare innovation.
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## AI Mechanisms in SoulSync
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+### Real-Time Chat Processing
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- User sends a message.
+- NLP analyzes the message to detect important details (e.g., emotions, recurring themes).
+- Relevant user memories are retrieved using NLP-based similarity search.
+- Query + selected memories are sent to the AI model.
 
-## Learn More
+### Retrieval-Augmented Generation (RAG) for Context
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+- Psychology book embeddings are searched for relevant information.
+- AI combines user context + book knowledge for a response.
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+### Fine-Tuning for Personality & Human-Like Responses
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+- Minor fine-tuning ensures a friendly, natural tone.
+- Future upgrade: More advanced fine-tuned models for deeper personalization.
 
-## How do I deploy this?
+### Guardrails for Safety & Ethical AI
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+- NLP-based content moderation to filter harmful responses.
+- Role constraints to prevent AI from acting as a therapist.
+- Escalation paths for users in crisis.
+
+### Future upgrades: Reinforcement Learning with Human Feedback (RLHF) to improve AI responses.
+
+- Now: NLP for memory selection + MongoDB storage, basic fine-tuning, RAG, and content moderation.
+- Future: Vector search for memories, deeper fine-tuning, and advanced RLHF-based safety mechanisms.
