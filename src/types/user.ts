@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
 
 // User Type from Zod
-export interface IUser extends mongoose.Document {
+export interface IUser extends Document {
   name: string;
   lastName: string;
   username: string;
@@ -13,9 +13,9 @@ export interface IUser extends mongoose.Document {
   moodEntries: mongoose.Types.ObjectId[];
   memories?: mongoose.Types.ObjectId[];
   comparePassword(enteredPassword: string): Promise<boolean>;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-// Mongoose Model Type
-export interface IUserModel extends mongoose.Model<IUser> {}
+// Explicitly extend Model<IUser>
+export interface IUserModel extends Model<IUser> {}
+
+
