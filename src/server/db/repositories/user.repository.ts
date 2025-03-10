@@ -1,6 +1,6 @@
 import { UserModel } from "../models/user.model";
-import { UserSchema, User } from "../schemas/user.schema";
-import { IUser } from "@/types/user";
+import { UserSchema } from "../schemas/user.schema";
+import type { IUser } from "@/types/user";
 import { MongoServerError } from "mongodb";
 import mongoose from "mongoose";
 
@@ -58,7 +58,7 @@ export const UserRepository = {
   },
   updateById: async (
     userId: string,
-    updateData: Partial<IUser>,
+    updateData: Partial<IUser>, //Partial cause it can contain any subset of the properties in IUser
   ): Promise<(IUser & Document) | null> => {
     try {
       if (!mongoose.Types.ObjectId.isValid(userId)) {

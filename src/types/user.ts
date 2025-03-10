@@ -1,4 +1,5 @@
-import mongoose, { Document } from "mongoose";
+import {type Document} from "mongoose";
+import type mongoose from "mongoose";
 
 // User Type from Zod
 export interface IUser extends Document {
