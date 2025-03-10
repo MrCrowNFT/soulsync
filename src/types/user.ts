@@ -15,7 +15,5 @@ export interface IUser extends Document {
   comparePassword(enteredPassword: string): Promise<boolean>;
 }
 
-// Explicitly extend Model<IUser>
-export interface IUserModel extends Model<IUser> {}
 
 

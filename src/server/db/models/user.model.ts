@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import type { IUser, IUserModel } from "../../../types/user";
+import type { IUser } from "../../../types/user";
 
 // MongoDB schema
 const userSchema = new mongoose.Schema<IUser>(
@@ -73,4 +73,4 @@ userSchema.methods.comparePassword = async function (
 
 // Create and export the model
 export const UserModel =
-  mongoose.models.User ?? mongoose.model<IUser, IUserModel>("User", userSchema);
+  mongoose.models.User ?? mongoose.model<IUser>("User", userSchema);
