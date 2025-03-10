@@ -114,8 +114,15 @@ userSchema.pre("save", async function (next) {
 });
 
 // Method to compare passwords
-userSchema.methods.comparePassword = async function (enteredPassword: string):Promise<boolean> {
-  return await bcrypt.compare(enteredPassword, this.password);
+userSchema.methods.comparePassword = async function (
+  enteredPassword: string,
+): Promise<boolean> {
+  try {
+    return await bcrypt.compare(enteredPassword, this.password as string);
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    throw new Error("Failed to compare passwords");
+  }
 };
 
 // Create and export the model
