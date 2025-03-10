@@ -1,4 +1,4 @@
-import mongoose, { Document, Model } from "mongoose";
+import mongoose, { Document } from "mongoose";
 
 // User Type from Zod
 export interface IUser extends Document {
@@ -14,6 +14,3 @@ export interface IUser extends Document {
   memories?: mongoose.Types.ObjectId[];
   comparePassword(enteredPassword: string): Promise<boolean>;
 }
-
-
-
