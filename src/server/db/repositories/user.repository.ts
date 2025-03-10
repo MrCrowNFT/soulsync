@@ -56,4 +56,36 @@ export const UserRepository = {
       throw error;
     }
   },
+  updateById: async (
+    userId: string,
+    updateData: Partial<IUser>,
+  ): Promise<(IUser & Document) | null> => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new Error("Invalid user ID");
+      }
+      return await UserModel.findByIdAndUpdate(userId, updateData, {
+        new: true,
+        runValidators: true,
+      }).exec();
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Delete user by ID
+   * @param userId - User ID
+   * @returns Deleted user or null
+   */
+  deleteById: async (userId: string): Promise<(IUser & Document) | null> => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new Error("Invalid user ID");
+      }
+      return await UserModel.findByIdAndDelete(userId).exec();
+    } catch (error) {
+      throw error;
+    }
+  },
 };
