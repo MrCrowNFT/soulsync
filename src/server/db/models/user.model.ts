@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema<IUser>(
     memories: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Memories",
+        ref: "Memory",
       },
     ],
   },
