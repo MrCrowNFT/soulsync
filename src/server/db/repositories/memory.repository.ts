@@ -15,6 +15,12 @@ export const MemoryRepository = {
     return await MemoryModel.findById(id).exec();
   },
 
+  /**
+   * Get all memories linked to a specific user ID
+   * @param userId - The user ID to search for
+   * @returns An array of memory documents
+   * @throws Error if the user ID is invalid or if the query fails
+   */
   getAllByUserId: async (userId: string) => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
@@ -33,5 +39,17 @@ export const MemoryRepository = {
   deleteById: async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
     return await MemoryModel.findByIdAndDelete(id).exec();
+  },
+
+  /**
+   * Delete all memories linked to a specific user ID
+   * @param userId - The user ID to delete memories for
+   * @returns The number of deleted memories
+   * @throws Error if the user ID is invalid or if the deletion fails
+   */
+  deleteAllByUserId: async (userId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(userId))
+      throw new Error("Invalid User ID");
+    return await MemoryModel.deleteMany({ userId }).exec();
   },
 };
