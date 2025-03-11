@@ -19,6 +19,9 @@ export const MoodEntryRepository = {
       throw new Error("Invalid User ID");
     return await MoodEntryModel.find({ userId }).exec();
   },
+
+//need a method for querying it, to get specific dates ranges of entries
+
   updateById: async (id: string, updateData: Partial<MoodEntry>) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
     const parsedData = MoodEntrySchema.partial().parse(updateData); // Validate update fields
