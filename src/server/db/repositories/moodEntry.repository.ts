@@ -10,7 +10,7 @@ export const MoodEntryRepository = {
     return newMoodEntry;
   },
 
-  gettById: async (id: string) => {
+  getById: async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new Error();
     return await MoodEntryModel.findById(id).exec();
   },
@@ -30,5 +30,10 @@ export const MoodEntryRepository = {
   deleteById: async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
     return await MoodEntryModel.findByIdAndDelete(id).exec();
+  },
+  deleteAllByUserId: async (userId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(userId))
+      throw new Error("Invalid User ID");
+    return await MoodEntryModel.deleteMany({ userId }).exec();
   },
 };
