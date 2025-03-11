@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { MoodEntryRepository } from "@/server/db/repositories/moodEntry.repository";
 import { MoodEntrySchema } from "@/server/db/schemas/moodEntry.schema";
 
@@ -26,6 +26,7 @@ export const moodEntryRouter = createTRPCRouter({
 
   //query get specific entries by date
 
+  //update by id
   updateById: protectedProcedure
     .input(
       z.object({
@@ -53,4 +54,6 @@ export const moodEntryRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       return MoodEntryRepository.deleteAllByUserId(input.id);
     }),
+
+    
 });
