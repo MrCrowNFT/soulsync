@@ -1,7 +1,23 @@
 import { MoodEntryModel } from "../models/moodEntry.model";
 import { MoodEntrySchema } from "../schemas/moodEntry.schema";
 import type { MoodEntry } from "../schemas/moodEntry.schema";
+import { formatMoodData } from "@/utils/mood.util";
 import mongoose from "mongoose";
+
+type MoodAverageDay = {
+  day: number;
+  averageMood: number;
+};
+
+type MoodAverageMonth = {
+  month: number;
+  averageMood: number;
+};
+
+type FormattedMoodData = {
+  label: string;
+  value: number;
+};
 
 export const MoodEntryRepository = {
   create: async (data: MoodEntry) => {
@@ -41,7 +57,7 @@ export const MoodEntryRepository = {
   },
 
   // New methods for averages
-  getWeeklyAverages: async (userId: string) => {
+  getWeeklyAverages: async (userId: string): Promise<MoodAverageDay[]> => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
 
@@ -52,12 +68,12 @@ export const MoodEntryRepository = {
           userId: userIdObj,
           createdAt: {
             $gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-          },
+          }, //Last 7 days, i think this should work, confusing af
         },
       },
       {
         $group: {
-          _id: { $dayOfWeek: "$createdAt" },
+          _id: { $dayOfWeek: "$createdAt" },//group by day of the week
           averageMood: { $avg: "$mood" },
         },
       },
@@ -74,7 +90,7 @@ export const MoodEntryRepository = {
     ]);
   },
 
-  getMonthlyAverages: async (userId: string) => {
+  getMonthlyAverages: async (userId: string): Promise<MoodAverageDay[]> => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
 
@@ -107,7 +123,7 @@ export const MoodEntryRepository = {
     ]);
   },
 
-  getYearlyAverages: async (userId: string) => {
+  getYearlyAverages: async (userId: string): Promise<MoodAverageMonth[]> => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
 
@@ -141,11 +157,10 @@ export const MoodEntryRepository = {
       },
     ]);
   },
-
   getMoodAverages: async (
     userId: string,
     type: "weekly" | "monthly" | "yearly",
-  ) => {
+  ): Promise<FormattedMoodData[]> => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
 
@@ -164,7 +179,6 @@ export const MoodEntryRepository = {
         throw new Error("Invalid type. Use 'weekly', 'monthly', or 'yearly'.");
     }
 
-    // Add the formatMoodData function or import it
     return formatMoodData(averages, type);
   },
 };
