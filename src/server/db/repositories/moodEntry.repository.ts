@@ -14,9 +14,14 @@ type MoodAverageMonth = {
   averageMood: number;
 };
 
-type FormattedMoodData = {
-  label: string;
-  value: number;
+type ChartData = {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    borderColor: string;
+    backgroundColor: string;
+  }[];
 };
 
 export const MoodEntryRepository = {
@@ -73,7 +78,7 @@ export const MoodEntryRepository = {
       },
       {
         $group: {
-          _id: { $dayOfWeek: "$createdAt" },//group by day of the week
+          _id: { $dayOfWeek: "$createdAt" }, //group by day of the week
           averageMood: { $avg: "$mood" },
         },
       },
@@ -160,7 +165,7 @@ export const MoodEntryRepository = {
   getMoodAverages: async (
     userId: string,
     type: "weekly" | "monthly" | "yearly",
-  ): Promise<FormattedMoodData[]> => {
+  ): Promise<ChartData> => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
 
