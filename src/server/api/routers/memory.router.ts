@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { MemoryRepository } from "@/server/db/repositories/memory.repository";
-import { MemorySchema } from "@/server/db/schemas/memory.schema";
+
+
 
 export const memoryRouter = createTRPCRouter({
-  create: protectedProcedure.input(MemorySchema).mutation(async ({ input }) => {
-    return MemoryRepository.create(input);
-  }),
+  //create: ,
 
   //get by memory id
   getById: protectedProcedure

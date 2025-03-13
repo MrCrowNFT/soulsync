@@ -1,18 +1,19 @@
 import { MemoryModel } from "../models/memory.model";
 import { MemorySchema } from "../schemas/memory.schema";
 import type { Memory } from "../schemas/memory.schema";
+import type { IMemory } from "@/types/memory";
 import mongoose from "mongoose";
 
 export const MemoryRepository = {
   create: async (data: Memory) => {
     const parsedData = MemorySchema.parse(data); // Validate input
-    const newMemory = await MemoryModel.create(parsedData);
-    return newMemory;
+    return await MemoryModel.create(parsedData);
   },
 
+  //get by memory id
   getById: async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
-    return await MemoryModel.findById(id).exec();
+    return await MemoryModel.findById(id).sort({ createdAt: -1 }).lean();
   },
 
   /**
@@ -24,7 +25,7 @@ export const MemoryRepository = {
   getAllByUserId: async (userId: string) => {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
-    return await MemoryModel.find({ userId }).exec();
+    return await MemoryModel.find({ userId }).sort({ createdAt: -1 }).lean();
   },
 
   //probably don't need this, you should be able to update your memory
@@ -53,5 +54,23 @@ export const MemoryRepository = {
     if (!mongoose.Types.ObjectId.isValid(userId))
       throw new Error("Invalid User ID");
     return await MemoryModel.deleteMany({ userId }).exec();
+  },
+
+  // Text-based search for memories
+  searchMemories(userId: string, searchTerm: string): Promise<IMemory[]> {
+    const validUserId = new mongoose.Types.ObjectId(userId);
+
+    return MemoryModel.find({
+      userId: validUserId,
+      $or: [
+        { memory: { $regex: searchTerm, $options: "i" } },
+        { people: { $in: [new RegExp(searchTerm, "i")] } },
+        { locations: { $in: [new RegExp(searchTerm, "i")] } },
+        { emotions: { $in: [new RegExp(searchTerm, "i")] } },
+        { topics: { $in: [new RegExp(searchTerm, "i")] } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
   },
 };

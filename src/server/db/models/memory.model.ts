@@ -1,7 +1,7 @@
 import mongoose, { type Model } from "mongoose";
 import { type IMemory } from "@/types/memory";
 
-//mongoose schema
+// Mongoose schema for memory
 const memorySchema = new mongoose.Schema<IMemory>(
   {
     userId: {
@@ -35,13 +35,22 @@ const memorySchema = new mongoose.Schema<IMemory>(
     },
   },
   {
-    timestamps: true, // add createdAt and updatedAt fields -> useful for dashboard
+    timestamps: true, // add createdAt and updatedAt fields
   },
 );
 
-// add an index on userId for faster queries
+// Add an index on userId for faster queries
 memorySchema.index({ userId: 1 });
 
-//to  ensures that the model is reused if it already exists (for hot reloading).
+// for text search
+memorySchema.index({
+  memory: "text",
+  people: "text",
+  locations: "text",
+  pets: "text",
+  topics: "text",
+});
+
+// Ensures that the model is reused if it already exists (for hot reloading)
 export const MemoryModel: Model<IMemory> =
   mongoose.models.Memory ?? mongoose.model<IMemory>("Memory", memorySchema);
