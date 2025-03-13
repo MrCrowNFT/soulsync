@@ -73,7 +73,8 @@ const emotionWords: Record<string, string[]> = {
   loved: ["loved", "adored", "cherished", "appreciated", "cared"],
 };
 
-// Simple sentiment analysis function
+// sentiment analysis function
+//Converts the text to lowercase and counts occurrences of positive and negative words.
 function analyzeSentiment(text: string): string | null {
   const lowerText = text.toLowerCase();
 
@@ -120,8 +121,9 @@ function analyzeSentiment(text: string): string | null {
 }
 
 // NLP processor function to extract entities
+// extracts people, places, topics, pets, and emotions from a message.
 export function processWithNLP(message: string): NLPResult {
-  // Process with Compromise.js
+  // analyze the message with Compromise.js
   const doc = nlp(message);
 
   // Extract people
@@ -131,7 +133,7 @@ export function processWithNLP(message: string): NLPResult {
   const locations = doc.places().out("array") as string[];
 
   // Extract potential topics (nouns, proper nouns, and hashtags)
-  const ignoredTopics = ["thing", "stuff", "day", "year", "time", "person"];
+  const ignoredTopics = ["thing", "stuff", "day", "year", "time", "person"]; //filters out common generic words 
   const topics = [
     ...new Set([
       ...(doc.nouns().not("#Pronoun").out("array") as string[]),
@@ -143,7 +145,7 @@ export function processWithNLP(message: string): NLPResult {
     .filter((topic) => !ignoredTopics.includes(topic.toLowerCase()))
     .slice(0, 10); // Limit to 10 topics
 
-  // Extract pets
+  // regex to match pet names (including multi-word names like "guinea pig").
   const lowerMessage = message.toLowerCase();
   const pets = petNames.filter((pet) => {
     const regex = new RegExp(`\\b${pet}\\b`, "i"); // Match whole words, case insensitive

@@ -3,11 +3,14 @@ import { MemorySchema } from "../schemas/memory.schema";
 import type { Memory } from "../schemas/memory.schema";
 import type { IMemory } from "@/types/memory";
 import mongoose from "mongoose";
+import { processWithNLP } from "@/utils/nlp.utils";
 
 export const MemoryRepository = {
   create: async (data: Memory) => {
     const parsedData = MemorySchema.parse(data); // Validate input
-    return await MemoryModel.create(parsedData);
+    const nlpResult = processWithNLP(parsedData.memory);
+    const memoryData = { ...parsedData, ...nlpResult };
+    return await MemoryModel.create(memoryData);
   },
 
   //get by memory id
@@ -58,16 +61,19 @@ export const MemoryRepository = {
 
   // Text-based search for memories
   searchMemories(userId: string, searchTerm: string): Promise<IMemory[]> {
+    if (!searchTerm.trim()) return Promise.resolve([]); // Prevent empty searches
+
     const validUserId = new mongoose.Types.ObjectId(userId);
+    const regex = new RegExp(searchTerm, "i"); // Case-insensitive search
 
     return MemoryModel.find({
       userId: validUserId,
       $or: [
-        { memory: { $regex: searchTerm, $options: "i" } },
-        { people: { $in: [new RegExp(searchTerm, "i")] } },
-        { locations: { $in: [new RegExp(searchTerm, "i")] } },
-        { emotions: { $in: [new RegExp(searchTerm, "i")] } },
-        { topics: { $in: [new RegExp(searchTerm, "i")] } },
+        { memory: regex }, // Direct text search
+        { people: regex }, // Match in arrays
+        { locations: regex },
+        { emotions: regex },
+        { topics: regex },
       ],
     })
       .sort({ createdAt: -1 })
