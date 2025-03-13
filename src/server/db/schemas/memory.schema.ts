@@ -15,3 +15,10 @@ export const MemorySchema = z.object({
 
 //type
 export type Memory = z.infer<typeof MemorySchema>;
+
+//input schema for memory creation
+export const memoryInputSchema = z.object({
+  userId: z.string(),
+  memory: z.string().min(1, "Memory content cannot be empty"),
+});
+

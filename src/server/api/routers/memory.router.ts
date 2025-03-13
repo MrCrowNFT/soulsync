@@ -1,12 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { MemoryRepository } from "@/server/db/repositories/memory.repository";
-
-//input schema for memory creation
-const memoryInputSchema = z.object({
-  userId: z.string(),
-  memory: z.string().min(1, "Memory content cannot be empty"),
-});
+import { memoryInputSchema } from "@/server/db/schemas/memory.schema";
 
 export const memoryRouter = createTRPCRouter({
   create: protectedProcedure
