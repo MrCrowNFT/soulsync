@@ -13,3 +13,13 @@ export interface IMemory extends Document {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+
+export interface NLPResult {
+  people: string[];
+  locations: string[];
+  topics: string[];
+  pets: string[];
+  emotions: string[];
+}
+
