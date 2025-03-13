@@ -4,8 +4,8 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "@/trpc/react";
-import ThemeProvider from "./components/theme-provider.tsx";
-import Navbar from "@/components/Navbar";
+import ThemeProvider from "./_components/theme-provider";
+import Navbar from "./_components/navbar";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
