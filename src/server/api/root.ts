@@ -1,12 +1,12 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { userRouter } from "./routers/user.router";
+import { memoryRouter } from "./routers/memory.router";
+import { moodEntryRouter } from "./routers/moodEntry.router";
 
-/**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
- */
 export const appRouter = createTRPCRouter({
-  
+  user: userRouter,
+  memory: memoryRouter,
+  moodEntry: moodEntryRouter,
 });
 
 // export type definition of API

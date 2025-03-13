@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 
 export const UserRepository = {
   /**
-   * Create a new user
+   * Create a new user -->This will be moved to the auth repository eventually
    * @param userData - User data to create
    * @returns The created user
    */
