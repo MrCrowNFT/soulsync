@@ -4,6 +4,11 @@ import { z } from "zod";
 export const MemorySchema = z.object({
   userId: z.string().min(1),
   memory: z.string().min(1),
+  people: z.array(z.string()).optional(),
+  pets: z.array(z.string()).optional(),
+  locations: z.array(z.string()).optional(),
+  emotions: z.array(z.string()).optional(),
+  topics: z.array(z.string()).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
