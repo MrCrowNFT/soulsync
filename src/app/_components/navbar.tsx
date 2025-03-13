@@ -1,13 +1,14 @@
+"use client"
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import DarkModeToggle from "./dark-mode-toggle";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
-  const router = useRouter();
-  const { data: session } = useSession();
+  const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -53,7 +54,7 @@ const Navbar = () => {
                   <Link
                     href={item.path}
                     className={`transition-colors duration-300 hover:text-gray-900 dark:hover:text-gray-300 ${
-                      router.pathname === item.path
+                      pathname === item.path
                         ? "border-b-2 border-gray-900 font-bold dark:border-gray-300"
                         : ""
                     }`}
@@ -79,7 +80,7 @@ const Navbar = () => {
         <div className="hidden items-center gap-6 md:flex">
           <DarkModeToggle />
 
-          {session ? (
+          {status === "authenticated" && session ? (
             <div className="flex items-center gap-4">
               <span className="text-sm">
                 Hi, {session.user?.name?.split(" ")[0] && "User"}
@@ -120,7 +121,7 @@ const Navbar = () => {
                   <Link
                     href={item.path}
                     className={`block rounded-md px-4 py-2 transition-colors duration-300 hover:bg-[#5A88BB] dark:hover:bg-gray-800 ${
-                      router.pathname === item.path
+                      pathname === item.path
                         ? "bg-[#5A88BB] font-bold dark:bg-gray-800"
                         : ""
                     }`}
@@ -134,7 +135,7 @@ const Navbar = () => {
           </nav>
           <div className="flex flex-col gap-3 border-t border-gray-700 pt-4 dark:border-gray-600">
             <DarkModeToggle />
-            {session ? (
+            {status === "authenticated" && session ? (
               <div className="flex flex-col gap-3">
                 <p className="px-4 py-2">
                   Hi, {session.user?.name?.split(" ")[0] && "User"}
