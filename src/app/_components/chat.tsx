@@ -1,3 +1,4 @@
+"use client"
 import { useState } from "react";
 import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";

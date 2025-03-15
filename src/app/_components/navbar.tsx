@@ -6,6 +6,7 @@ import DarkModeToggle from "./dark-mode-toggle";
 import { useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 
+
 const Navbar = () => {
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -41,9 +42,9 @@ const Navbar = () => {
           <Link href="/" className="flex items-center gap-2">
             {/* Replace with your actual logo */}
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-bold text-[#6C9BCF] dark:bg-gray-800 dark:text-white">
-              T3
+             
             </div>
-            <span className="hidden text-lg font-bold md:block">YourApp</span>
+            
           </Link>
 
           {/* Desktop Nav */}

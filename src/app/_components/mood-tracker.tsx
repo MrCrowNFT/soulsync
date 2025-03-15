@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  FrownIcon,
-  MehIcon,
-  SmileIcon,
-  GrinIcon,
-  FaceIcon,
-  LucideIcon,
-} from "lucide-react";
+import { Frown, Meh, Smile, LucideIcon, Angry, Laugh } from "lucide-react";
 
 interface Mood {
   value: number;
@@ -20,11 +13,11 @@ const MoodTracker: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
   const moods: Mood[] = [
-    { value: 1, icon: FrownIcon, label: "Very Unhappy", color: "text-red-500" },
-    { value: 2, icon: MehIcon, label: "Unhappy", color: "text-orange-500" },
-    { value: 3, icon: FaceIcon, label: "Neutral", color: "text-yellow-500" },
-    { value: 4, icon: SmileIcon, label: "Happy", color: "text-lime-500" },
-    { value: 5, icon: GrinIcon, label: "Very Happy", color: "text-green-500" },
+    { value: 1, icon: Angry, label: "Very Unhappy", color: "text-red-500" },
+    { value: 2, icon: Frown, label: "Unhappy", color: "text-orange-500" },
+    { value: 3, icon: Meh, label: "Neutral", color: "text-yellow-500" },
+    { value: 4, icon: Smile, label: "Happy", color: "text-lime-500" },
+    { value: 5, icon: Laugh, label: "Very Happy", color: "text-green-500" },
   ];
 
   const handleChange = (moodValue: number): void => {
