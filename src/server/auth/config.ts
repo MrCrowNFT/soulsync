@@ -1,5 +1,9 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import clientPromise from "../config/database";
+import { UserRepository } from "../db/repositories/user.repository";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -15,11 +19,6 @@ declare module "next-auth" {
       // role: UserRole;
     } & DefaultSession["user"];
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
 }
 
 /**
@@ -28,17 +27,58 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
-    DiscordProvider,
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "example@example.com",
+        },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        console.log("Received credentials:", credentials); // Debugging
+
+        if (!credentials?.email || !credentials?.password) {
+          console.error("Missing email or password in credentials");
+          return null;
+        }
+
+        // Fetch user from DB
+        const foundUser = await UserRepository.findByEmail(credentials.email);
+        if (!foundUser?.comparePassword) {
+          // 👈 Using optional chaining
+          console.error("User not found or comparePassword method missing");
+          return null;
+        }
+
+        // Compare password
+        const isPasswordValid = await foundUser.comparePassword(
+          credentials.password,
+        );
+        if (!isPasswordValid) {
+          console.error("Invalid password");
+          return null;
+        }
+
+        console.log("User authenticated successfully:", foundUser.email);
+
+        return {
+          name: foundUser.name,
+          lastName: foundUser.lastName,
+          username: foundUser.username,
+          email: foundUser.email,
+          photo: foundUser.photo,
+        };
+      },
+    }),
   ],
   callbacks: {
     session: ({ session, token }) => ({

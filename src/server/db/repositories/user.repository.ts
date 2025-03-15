@@ -50,7 +50,7 @@ export const UserRepository = {
    */
   findByEmail: async (email: string): Promise<IUser | null> => {
     try {
-      const user = await UserModel.findOne({ email });
+      const user = await UserModel.findOne({ email }).select("+password");
       return user;
     } catch (error) {
       throw error;

@@ -32,7 +32,7 @@ if (process.env.NODE_ENV === "development") {
 } else {
   // in prod, it's best to not use a global variable, as in serverless environments, 
   // global doesn't persist across function executions.
-  const client = new MongoClient(MONGODB_URI);
+  client = new MongoClient(MONGODB_URI);
   clientPromise = client.connect();
 }
 

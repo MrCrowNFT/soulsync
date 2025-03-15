@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Instagram, Twitter, Facebook, Linkedin } from "lucide-react";
 
-// Define footer link categories and their items
+// TODO: Define footer link categories and their items
 const footerCategories = [
   {
     title: "About",
