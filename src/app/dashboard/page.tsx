@@ -3,11 +3,12 @@ import Assessment from "../_components/assessment";
 import MoodGraph from "../_components/mood-graph";
 import UserCard from "../_components/user-card";
 import { mockAssessmentData } from "@/mocks/assessment.mock";
+import { mockUser } from "@/mocks/user.mock";
 
 const Dashboard = () => {
   return (
     <>
-      <UserCard user={} />
+      <UserCard user={mockUser} />
       <div className="flex">
         <MoodGraph data={moodGraphMock} />
         <Assessment assessment={mockAssessmentData} />
