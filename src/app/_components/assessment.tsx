@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import type { AssessmentProp } from "@/types/assessmentssessment";
+import type { AssessmentProp } from "@/types/assessment";
 
 const Assessment: FunctionComponent<AssessmentProp> = ({ assessment }) => {
   const formattedTimestamp = new Date(assessment.timestamp).toLocaleString();
