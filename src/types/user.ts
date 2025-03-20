@@ -15,3 +15,7 @@ export interface IUser extends Document {
   memories?: mongoose.Types.ObjectId[];
   comparePassword(enteredPassword: string): Promise<boolean>;
 }
+
+export interface IUserCardProps {
+  user: IUser;
+}
