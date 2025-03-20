@@ -11,7 +11,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   photo: string;
-  moodEntries: mongoose.Types.ObjectId[];
+  moodEntries?: mongoose.Types.ObjectId[];
   memories?: mongoose.Types.ObjectId[];
   comparePassword(enteredPassword: string): Promise<boolean>;
 }

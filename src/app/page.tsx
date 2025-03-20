@@ -1,3 +1,4 @@
+import { mockTestimonies } from "@/mocks/testimonies.mock";
 import HeroSection from "./_components/hero-section";
 import InfoSection from "./_components/info-section";
 import TestimonySection from "./_components/testimony-section";
@@ -7,7 +8,7 @@ export default async function Home() {
     <>
       <HeroSection />
       <InfoSection />
-      <TestimonySection testimonies={} />
+      <TestimonySection testimonies={mockTestimonies} />
     </>
   );
 }
