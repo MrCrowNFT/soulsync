@@ -235,7 +235,7 @@ export const signup = async (req, res) => {
       lastName,
       gender,
       birthDate: birthDateObj,
-      photo: photo || "", // Use provided photo or default empty string
+      photo: photo || "",
       moodEntries: [],
       memories: [],
     });
