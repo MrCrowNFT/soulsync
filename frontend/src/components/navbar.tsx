@@ -1,17 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import DarkModeToggle from "./dark-mode-toggle";
-
-interface NavItem {
-  path: string;
-  label: string;
-}
-
-interface NavbarProps {
-  navItems: NavItem[];
-  authItems?: NavItem[];
-  logoSrc?: string;
-}
+import { NavbarProps } from "../types/navbar";
 
 const Navbar: React.FC<NavbarProps> = ({
   navItems,
