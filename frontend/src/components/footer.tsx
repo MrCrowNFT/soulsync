@@ -4,14 +4,14 @@ import { FooterProps } from "../types/footer";
 import {
   DEFAULT_FOOTER_CATEGORIES,
   DEFAULT_SOCIAL_LINKS,
-  DEFAULT_COMPANY_NAME,
+  COMPANY_NAME,
 } from "../data/footer-data";
 
 const Footer: React.FC<FooterProps> = ({
   footerCategories = DEFAULT_FOOTER_CATEGORIES,
   socialLinks = DEFAULT_SOCIAL_LINKS,
   logoComponent,
-  companyName = DEFAULT_COMPANY_NAME,
+  companyName = COMPANY_NAME,
 }) => {
   const currentYear = new Date().getFullYear();
 

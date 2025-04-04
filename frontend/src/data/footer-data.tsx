@@ -1,7 +1,7 @@
 import { Instagram, Twitter, Facebook, Linkedin } from "lucide-react";
 import { FooterCategory, SocialLink } from "../types/footer";
 
-export const DEFAULT_COMPANY_NAME = "SoulSync";
+export const COMPANY_NAME = "SoulSync";
 
 export const DEFAULT_FOOTER_CATEGORIES: FooterCategory[] = [
   {
