@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 /**
  * Get user profile using _id from token
- * @route GET /user/profile
+ * @route GET /user
  * @access Private
  */
 export const getUser = async (req, res) => {
@@ -29,7 +29,7 @@ export const getUser = async (req, res) => {
 
 /**
  * Update user profile
- * @route PUT /users/profile
+ * @route PUT /user
  * @access Private
  */
 export const updateUser = async (req, res) => {
@@ -122,7 +122,7 @@ export const updateUser = async (req, res) => {
 
 /**
  * Delete user account
- * @route DELETE /users/profile
+ * @route DELETE /user
  * @access Private
  */
 export const deleteUserAccount = async (req, res) => {
@@ -141,12 +141,10 @@ export const deleteUserAccount = async (req, res) => {
       .json({ success: true, message: "User account deleted successfully" });
   } catch (error) {
     console.error("Error deleting user account:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error deleting user account",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error deleting user account",
+      error: error.message,
+    });
   }
 };
