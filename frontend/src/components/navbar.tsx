@@ -1,13 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import DarkModeToggle from "./dark-mode-toggle";
-import { NavbarProps } from "../types/navbar";
+import { mainNavItems, authNavItems } from "../data/navbar-data";
 
-const Navbar: React.FC<NavbarProps> = ({
-  navItems,
-  authItems = [],
-  logoSrc = "",
-}) => {
+const Navbar: React.FC = () => {
+  const logoSrc = "../public/mental-health-icon.svg";
+
   return (
     <div className="sticky top-0 h-auto p-6 z-50">
       <div className="flex items-center justify-between">
@@ -17,7 +15,7 @@ const Navbar: React.FC<NavbarProps> = ({
           {/* Nav */}
           <nav>
             <ul className="flex gap-6">
-              {navItems.map((item, index) => (
+              {mainNavItems.map((item, index) => (
                 <li key={index}>
                   <Link to={item.path}>{item.label}</Link>
                 </li>
@@ -28,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {/* Login Signup */}
         <div className="flex justify-end space-x-4 gap-6 mr-5">
           <DarkModeToggle />
-          {authItems.map((item, index) => (
+          {authNavItems.map((item, index) => (
             <Link key={index} to={item.path}>
               {item.label}
             </Link>
