@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema(
     },
     birthDate: {
       type: Date,
-      required: true,
       validate: {
         validator: function (value) {
           return value < new Date();

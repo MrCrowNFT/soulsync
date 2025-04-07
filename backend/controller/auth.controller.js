@@ -166,15 +166,7 @@ export const signup = async (req, res) => {
     } = req.body;
 
     // Check required fields
-    if (
-      !username ||
-      !password ||
-      !email ||
-      !name ||
-      !lastName ||
-      !gender ||
-      !birthDate
-    ) {
+    if (!username || !password || !email || !name || !lastName || !gender) {
       return res.status(400).json({
         success: false,
         message:
@@ -207,14 +199,16 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Validate birth date
-    const birthDateObj = new Date(birthDate);
-    if (isNaN(birthDateObj.getTime()) || birthDateObj >= new Date()) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid birth date. Date must be valid and not in the future.",
-      });
+    // Validate birth date if included
+    if (birthDate) {
+      const birthDateObj = new Date(birthDate);
+      if (isNaN(birthDateObj.getTime()) || birthDateObj >= new Date()) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid birth date. Date must be valid and not in the future.",
+        });
+      }
     }
 
     // Check if username already exists
