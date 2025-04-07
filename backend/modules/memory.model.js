@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+//todo check the preferences in previus versions
+//todo check if we are actually using this one, or move back to preferences since
+//todo now we can use better ai tools since no ts restrictions
+//todo maybe combine preferences with memories?
+//todo add likes and dislikes, goals, hobbies, personality (of the user, need to make the distintion)
 const memorySchema = new mongoose.Schema(
   {
     userId: {
@@ -12,28 +17,28 @@ const memorySchema = new mongoose.Schema(
       required: true,
     },
     people: {
-      type: [String], // Extracted names from chat
+      type: [String],
       default: [],
     },
     pets: {
-      type: [String], // Extracted pet names (if mentioned)
+      type: [String],
       default: [],
     },
     locations: {
-      type: [String], // Extracted locations
+      type: [String],
       default: [],
     },
     emotions: {
-      type: [String], // Extracted emotions
+      type: [String],
       default: [],
     },
     topics: {
-      type: [String], // Keywords from conversation
+      type: [String],
       default: [],
     },
   },
   {
-    timestamps: true, // add createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 

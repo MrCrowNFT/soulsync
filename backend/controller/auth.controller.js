@@ -182,6 +182,15 @@ export const signup = async (req, res) => {
       });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
     // Validate gender
     const validGenders = [
       "male",
@@ -226,7 +235,6 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Create new user with all schema fields
     const newUser = new User({
       username,
       password,
@@ -236,13 +244,14 @@ export const signup = async (req, res) => {
       gender,
       birthDate: birthDateObj,
       photo: photo || "",
+      // Initialize empty arrays for references
       moodEntries: [],
       memories: [],
     });
 
     await newUser.save();
 
-    // Send success response
+    // success response without password
     res.status(201).json({
       success: true,
       message: "User created successfully",

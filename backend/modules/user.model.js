@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: true, select: false },
     photo: { type: String, default: "" },
+
     moodEntries: [
       {
         type: mongoose.Schema.Types.ObjectId,
