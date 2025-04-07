@@ -12,8 +12,9 @@ export interface SignupParams {
 export interface SignupResponse {
   success: boolean;
   message: string;
+  //todo need to create the user type and set data to it 
   data: {
-    id: string;
+    _id: string;
     username: string;
     email: string;
     name: string;
