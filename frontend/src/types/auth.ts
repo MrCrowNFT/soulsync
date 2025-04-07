@@ -1,3 +1,5 @@
+import { IUser } from "./user";
+
 export interface SignupParams {
   username: string;
   password: string;
@@ -12,17 +14,7 @@ export interface SignupParams {
 export interface SignupResponse {
   success: boolean;
   message: string;
-  //todo need to create the user type and set data to it 
-  data: {
-    _id: string;
-    username: string;
-    email: string;
-    name: string;
-    lastName: string;
-    gender: "male" | "female" | "non-binary" | "other" | "prefer-not-to-say";
-    birthDate: string; // Will be returned as ISO string from server
-    photo: string;
-  };
+  data: IUser;
 }
 
 export interface LoginParams {
@@ -34,6 +26,7 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   accessToken: string;
+  data: IUser
 }
 
 export interface LogoutResponse {

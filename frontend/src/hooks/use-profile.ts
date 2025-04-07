@@ -7,7 +7,11 @@ import {
   SignupParams,
   SignupResponse,
 } from "../types/auth";
-import { loginRequest, logoutRequest, signupRequest } from "../api/services/auth";
+import {
+  loginRequest,
+  logoutRequest,
+  signupRequest,
+} from "../api/services/auth";
 
 type Profile = {
   _id: string;
@@ -31,6 +35,8 @@ type Profile = {
   login: (login: LoginParams) => Promise<LoginResponse>;
   logout: () => Promise<LogoutResponse>;
 };
+
+//todo fix the any types and make login return user profile on the backend
 
 export const useProfile = create<Profile>()(
   persist(
@@ -66,11 +72,11 @@ export const useProfile = create<Profile>()(
             birthDate: response.data.birthDate
               ? new Date(response.data.birthDate)
               : null,
-            createdAt: response.user.createdAt
-              ? new Date(response.user.createdAt)
+            createdAt: response.data.createdAt
+              ? new Date(response.data.createdAt)
               : null,
-            updatedAt: response.user.updatedAt
-              ? new Date(response.user.updatedAt)
+            updatedAt: response.data.updatedAt
+              ? new Date(response.data.updatedAt)
               : null,
             initialized: true,
             isLoading: false,
@@ -90,23 +96,23 @@ export const useProfile = create<Profile>()(
         try {
           const response = await loginRequest(login);
           set({
-            _id: response.user._id,
-            name: response.user.name,
-            lastName: response.user.lastName,
-            username: response.user.username,
-            gender: response.user.gender,
-            email: response.user.email,
-            photo: response.user.photo,
-            birthDate: response.user.birthDate
-              ? new Date(response.user.birthDate)
+            _id: response.data._id,
+            name: response.data.name,
+            lastName: response.data.lastName,
+            username: response.data.username,
+            gender: response.data.gender,
+            email: response.data.email,
+            photo: response.data.photo,
+            birthDate: response.data.birthDate
+              ? new Date(response.data.birthDate)
               : null,
-            moodEntries: response.user.moodEntries || [],
-            memories: response.user.memories || [],
-            createdAt: response.user.createdAt
-              ? new Date(response.user.createdAt)
+            moodEntries: response.data.moodEntries || [],
+            memories: response.data.memories || [],
+            createdAt: response.data.createdAt
+              ? new Date(response.data.createdAt)
               : null,
-            updatedAt: response.user.updatedAt
-              ? new Date(response.user.updatedAt)
+            updatedAt: response.data.updatedAt
+              ? new Date(response.data.updatedAt)
               : null,
             initialized: true,
             isLoading: false,

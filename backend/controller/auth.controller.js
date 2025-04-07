@@ -21,7 +21,7 @@ export const login = async (req, res) => {
       res.status(401).json({ success: false, message: "Invalid password" });
       return;
     }
-    //todo return the user as well, so i don't have to call login and then call get user 
+    //todo return the user as well, so i don't have to call login and then call get user
 
     const { accessToken, refreshToken } = generateTokens(user);
 
