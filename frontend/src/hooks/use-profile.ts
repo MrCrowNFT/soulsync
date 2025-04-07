@@ -12,6 +12,7 @@ import {
   logoutRequest,
   signupRequest,
 } from "../api/services/auth";
+import axios from "axios";
 
 type Profile = {
   _id: string;
@@ -82,12 +83,13 @@ export const useProfile = create<Profile>()(
             isLoading: false,
           });
           return response;
-        } catch (signupError: any) {
-          set({
-            isLoading: false,
-            error: signupError?.response?.data?.message || "Signup failed",
-          });
-          throw signupError;
+        } catch (error) {
+          const errorMessage = axios.isAxiosError(error)
+            ? error.response?.data?.message || "Signup failed"
+            : "Signup failed";
+
+          set({ isLoading: false, error: errorMessage });
+          throw error;
         }
       },
 
@@ -118,12 +120,13 @@ export const useProfile = create<Profile>()(
             isLoading: false,
           });
           return response;
-        } catch (loginError: any) {
-          set({
-            isLoading: false,
-            error: loginError?.response?.data?.message || "Login failed",
-          });
-          throw loginError;
+        } catch (error) {
+          const errorMessage = axios.isAxiosError(error)
+            ? error.response?.data?.message || "Login failed"
+            : "Login failed";
+
+          set({ isLoading: false, error: errorMessage });
+          throw error;
         }
       },
 
@@ -152,12 +155,13 @@ export const useProfile = create<Profile>()(
           // Remove token from localStorage
           localStorage.removeItem("accessToken");
           return response;
-        } catch (logoutError: any) {
-          set({
-            isLoading: false,
-            error: logoutError?.response?.data?.message || "Logout failed",
-          });
-          throw logoutError;
+        } catch (error) {
+          const errorMessage = axios.isAxiosError(error)
+            ? error.response?.data?.message || "Logout failed"
+            : "Logout failed";
+
+          set({ isLoading: false, error: errorMessage });
+          throw error;
         }
       },
     }),
