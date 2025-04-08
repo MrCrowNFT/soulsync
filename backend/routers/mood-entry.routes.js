@@ -8,7 +8,7 @@ import {
 const moodEntryRouter = express.Router();
 
 moodEntryRouter.post("/", newMoodEntry);
-moodEntryRouter.get("/", getEntries);
+moodEntryRouter.get("/:type", getEntries);
 moodEntryRouter.delete("/", deleteMoodEntry);
 
 export default moodEntryRouter;

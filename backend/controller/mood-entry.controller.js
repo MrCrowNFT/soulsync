@@ -52,7 +52,7 @@ export const newMoodEntry = async (req, res) => {
 export const getEntries = async (req, res) => {
   try {
     const userId = req.user._id;
-    const type = req.body;
+    const type = req.params;
 
     if (!userId || !type) {
       res
