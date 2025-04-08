@@ -23,7 +23,7 @@ type Profile = {
   birthDate?: Date | null;
   email: string;
   photo?: string;
-  moodEntries: string[]; // Consider creating a MoodEntry type
+  moodEntries: string[]; 
   memories: string[]; // Create a Memory type later
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -38,6 +38,12 @@ type Profile = {
 };
 
 //todo fix the any types and make login return user profile on the backend
+
+//todo i want to get the memories to be gotten with the rest of the profile, need to populate the backend
+
+//todo i don't really want the mood entries? i mean, the api call will get the averages, not the 
+//todo mood entries itself, therefor instead of mood entries, it should have the averages
+//todo and update them everytime it gets updated (new mood entry) making the api call
 
 export const useProfile = create<Profile>()(
   persist(
