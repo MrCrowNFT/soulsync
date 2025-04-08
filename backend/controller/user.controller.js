@@ -1,6 +1,8 @@
 import { User } from "../modules/user.model";
 import mongoose from "mongoose";
 
+
+//todo not sure if will need this
 /**
  * Get user profile using _id from token
  * @route GET /user
