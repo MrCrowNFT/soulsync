@@ -21,7 +21,6 @@ export const login = async (req, res) => {
       res.status(401).json({ success: false, message: "Invalid password" });
       return;
     }
-    //todo return the user as well, so i don't have to call login and then call get user
 
     const { accessToken, refreshToken } = generateTokens(user);
 
@@ -46,10 +45,15 @@ export const login = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
+    //create a user object without the password for common sense reasons
+    const userData = user.toObject();
+    delete userData.password;
+
     res.status(200).json({
       success: true,
       message: "Login successful",
       accessToken,
+      data: userData,
     });
   } catch (error) {
     console.error(`Error during login: ${error.message}`);

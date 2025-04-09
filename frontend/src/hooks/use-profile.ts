@@ -37,8 +37,6 @@ type Profile = {
   logout: () => Promise<LogoutResponse>;
 };
 
-//todo fix the any types and make login return user profile on the backend
-
 //todo i want to get the memories to be gotten with the rest of the profile, need to populate the backend
 
 //todo i don't really want the mood entries? i mean, the api call will get the averages, not the
