@@ -14,7 +14,6 @@ export interface SignupParams {
 export interface SignupResponse {
   success: boolean;
   message: string;
-  data: IUser;
 }
 
 export interface LoginParams {
@@ -26,7 +25,7 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   accessToken: string;
-  data: IUser
+  data: IUser;
 }
 
 export interface LogoutResponse {

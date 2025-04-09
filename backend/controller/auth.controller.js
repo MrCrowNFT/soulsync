@@ -250,16 +250,6 @@ export const signup = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      data: {
-        _id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        name: newUser.name,
-        lastName: newUser.lastName,
-        gender: newUser.gender,
-        birthDate: newUser.birthDate,
-        photo: newUser.photo,
-      },
     });
   } catch (error) {
     console.error("Error creating user:", error);

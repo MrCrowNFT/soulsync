@@ -23,7 +23,7 @@ type Profile = {
   birthDate?: Date | null;
   email: string;
   photo?: string;
-  moodEntries: string[]; 
+  moodEntries: string[];
   memories: string[]; // Create a Memory type later
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -41,7 +41,7 @@ type Profile = {
 
 //todo i want to get the memories to be gotten with the rest of the profile, need to populate the backend
 
-//todo i don't really want the mood entries? i mean, the api call will get the averages, not the 
+//todo i don't really want the mood entries? i mean, the api call will get the averages, not the
 //todo mood entries itself, therefor instead of mood entries, it should have the averages
 //todo and update them everytime it gets updated (new mood entry) making the api call
 
@@ -68,26 +68,8 @@ export const useProfile = create<Profile>()(
         set({ isLoading: true, error: null });
         try {
           const response = await signupRequest(signup);
-          set({
-            _id: response.data._id,
-            name: response.data.name,
-            lastName: response.data.lastName,
-            username: response.data.username,
-            gender: response.data.gender,
-            email: response.data.email,
-            photo: response.data.photo,
-            birthDate: response.data.birthDate
-              ? new Date(response.data.birthDate)
-              : null,
-            createdAt: response.data.createdAt
-              ? new Date(response.data.createdAt)
-              : null,
-            updatedAt: response.data.updatedAt
-              ? new Date(response.data.updatedAt)
-              : null,
-            initialized: true,
-            isLoading: false,
-          });
+          set({ isLoading: false });
+
           return response;
         } catch (error) {
           const errorMessage = axios.isAxiosError(error)
