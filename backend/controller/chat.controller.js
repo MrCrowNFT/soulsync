@@ -1,6 +1,5 @@
 //todo in this chat i need to integrate the ai utils
 
-import req from "express/lib/request";
 import ChatEntry from "../models/chat-entry.model";
 
 //**We don't need a chat entry update method

@@ -1,6 +1,5 @@
-import { User } from "../modules/user.model";
+import User from "../models/user.model";
 import mongoose from "mongoose";
-
 
 //todo not sure if will need this
 /**
