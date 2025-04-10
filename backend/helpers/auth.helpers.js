@@ -27,7 +27,7 @@ const validateEnvironmentVars = (requiredVars) => {
  */
 export const generateAccessToken = (user) => {
   validateEnvironmentVars(["JWT_ACCESS_SECRET"]);
-
+//mongo db adds an id as _id automatically
   if (!user || !user._id || !user.username) {
     throw new Error("Invalid user object provided");
   }
