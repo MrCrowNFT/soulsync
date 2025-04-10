@@ -1,7 +1,5 @@
-
-
 export interface IUser {
-  _id: string;
+  _id?: string;
   name: string;
   lastName: string;
   username: string;
@@ -9,8 +7,8 @@ export interface IUser {
   birthDate?: Date;
   email: string;
   photo?: string;
-  moodEntries: string[];
-  memories: string[];
+  moodEntries?: string[];
+  memories?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

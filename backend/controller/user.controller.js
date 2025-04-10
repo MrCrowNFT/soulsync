@@ -1,5 +1,4 @@
 import User from "../models/user.model";
-import mongoose from "mongoose";
 
 //todo not sure if will need this
 /**
@@ -20,7 +19,7 @@ export const getUser = async (req, res) => {
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     console.error("Error fetching user profile:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error fetching user profile",
       error: error.message,
@@ -28,6 +27,7 @@ export const getUser = async (req, res) => {
   }
 };
 
+//todo not sure if i want handle changing email and password here
 /**
  * Update user profile
  * @route PUT /user
@@ -113,7 +113,7 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error updating user",
       error: error.message,
@@ -137,12 +137,12 @@ export const deleteUserAccount = async (req, res) => {
 
     await User.findByIdAndDelete(userId);
 
-    res
+    return res
       .status(200)
       .json({ success: true, message: "User account deleted successfully" });
   } catch (error) {
     console.error("Error deleting user account:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error deleting user account",
       error: error.message,
