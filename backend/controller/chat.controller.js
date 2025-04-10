@@ -27,7 +27,7 @@ export const getChatEntries = async (req, res) => {
     }
 
     const limit = parseInt(req.query.limit) || 100; //default to 100 entries
-    const skip = parseInt(req.query.limit) || 0;
+    const skip = parseInt(req.query.skip) || 0;
 
     const chatEntries = await ChatEntry.find({ userId: userId })
       .sort({ createdAt: -1 }) //get most recent
@@ -142,7 +142,7 @@ export const deleteChatEntries = async (req, res) => {
     console.error("Error deleting chat entries:", error);
     return res.status(500).json({
       success: false,
-      error: "Internal server error",
+      message: "Internal server error",
       details: error.message,
     });
   }
