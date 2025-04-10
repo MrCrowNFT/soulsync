@@ -6,6 +6,7 @@ import authRouter from "./routers/auth.routes";
 import moodEntryRouter from "./routers/mood-entry.routes";
 import { authenticate } from "./middleware/auth";
 import chatEntryRouter from "./routers/chat-entry.routes";
+import userRouter from "./routers/user.routes";
 
 const app = express();
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(cors()); //allow all origins for now
 app.use("/auth", authRouter);
 app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
+app.use("/user", userRouter);
 
 const PORT = process.env.PORT || 5500;
 app.liste(PORT, () => {
