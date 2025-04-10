@@ -1,4 +1,3 @@
-import req from "express/lib/request";
 import { MoodEntry } from "../models/mood-entry.model";
 import mongoose from "mongoose";
 import { getMoodAverages } from "../helpers/mood-entry.helper";
@@ -55,10 +54,10 @@ export const getEntries = async (req, res) => {
     const type = req.params;
 
     if (!userId || !type) {
-      res
+      return res
         .status(400)
         .json({ success: false, error: "userId and type are required" });
-      return;
+      
     }
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res
@@ -77,33 +76,33 @@ export const getEntries = async (req, res) => {
   }
 };
 
-//todo the only moment when i might need to delete the entries are in a bundle
-//todo when the user is deleting his account, thus, i will turn this one into a
-//todo helper function and add a delete all endpoint. maybe
-export const deleteMoodEntry = async (req, res) => {
+export const deleteMoodEntries = async (req, res) => {
   try {
-    const { moodId } = req.body;
+    const userId = req.user._id;
 
-    if (!moodId) {
-      res.status(400).json({ success: false, error: "moodId is required" });
-      return;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "userId are required" });
     }
 
-    const deletedMoodEntry = await MoodEntry.findByIdAndDelete(moodId);
-
-    if (!deletedMoodEntry) {
-      res.status(404).json({ success: false, error: "Mood entry not found" });
-      return;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "invalid user id" });
     }
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Mood entry deleted successfully" });
+    await MoodEntry.deleteMany({ userId: userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "All Mood entries deleted successfully",
+    });
   } catch (error) {
-    console.error("Error in deleteMoodEntry:", error);
+    console.error("Error in deleteMoodEntries:", error);
     return res.status(500).json({
       success: false,
-      error: "Internal server error",
+      message: "Internal server error",
       details: error.message,
     });
   }

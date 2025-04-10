@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  deleteMoodEntry,
+  deleteMoodEntries,
   getEntries,
   newMoodEntry,
 } from "../controller/mood-entry.controller";
@@ -9,6 +9,6 @@ const moodEntryRouter = express.Router();
 
 moodEntryRouter.post("/", newMoodEntry);
 moodEntryRouter.get("/:type", getEntries);
-moodEntryRouter.delete("/", deleteMoodEntry);
+moodEntryRouter.delete("/", deleteMoodEntries);
 
 export default moodEntryRouter;

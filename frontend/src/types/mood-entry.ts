@@ -25,3 +25,9 @@ export interface getMoodEntriesResponse {
   success: boolean;
   data: formattedMoodData;
 }
+
+export interface deleteMoodEntriesResponse {
+  success: boolean;
+  message: string;
+  details?: string;
+}

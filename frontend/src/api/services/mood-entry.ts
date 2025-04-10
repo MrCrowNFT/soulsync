@@ -1,4 +1,5 @@
 import {
+  deleteMoodEntriesResponse,
   getMoodEntriesResponse,
   newMoodEntryResponse,
 } from "../../types/mood-entry";
@@ -17,3 +18,9 @@ export const getMoodEntries = async (
   const res = await api.get(`/mood/${type}`);
   return res.data;
 };
+
+export const deleteMoodEntries =
+  async (): Promise<deleteMoodEntriesResponse> => {
+    const res = await api.delete(`/mood/`);
+    return res.data;
+  };
