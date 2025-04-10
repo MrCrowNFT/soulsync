@@ -1,5 +1,5 @@
 import req from "express/lib/request";
-import { MoodEntry } from "../modules/mood-entry.model";
+import { MoodEntry } from "../models/mood-entry.model";
 import mongoose from "mongoose";
 import { getMoodAverages } from "../helpers/mood-entry.helper";
 
