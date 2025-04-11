@@ -53,6 +53,11 @@ const memorySchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // For vector search (future RAG)
+    embedding: {
+      type: [Number],
+      default: [],
+    },
   },
   {
     timestamps: true,

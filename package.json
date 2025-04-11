@@ -10,10 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "compromise": "^14.14.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.1"
+    "mongoose": "^8.13.1",
+    "sentiment": "^5.0.2"
   }
 }
