@@ -1,12 +1,5 @@
 import type { FunctionComponent } from "react";
-
-interface TestimonyCardProps {
-  testimony: {
-    photo: string;
-    username: string;
-    opinion: string;
-  };
-}
+import { TestimonyCardProps } from "../types/testimony";
 
 const TestimonyCard: FunctionComponent<TestimonyCardProps> = ({
   testimony,
