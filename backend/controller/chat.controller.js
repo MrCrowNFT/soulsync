@@ -1,6 +1,8 @@
 //todo in this chat i need to integrate the ai utils
 
 import ChatEntry from "../models/chat-entry.model";
+import { getLLMResponse } from "../utils/ai.util";
+import { analyzeAndExtractMemory, fetchRelevantMemories } from "../utils/memory.util";
 
 //**We don't need a chat entry update method
 
@@ -66,30 +68,15 @@ export const newChatEntry = async (req, res) => {
     const userId = req.user._id;
     const { message, sender, metadata } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ success: false, error: "userId required" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "invalid user id" });
-    }
-
-    if (!message || !sender) {
-      res
-        .status(400)
-        .json({ success: false, error: "Message and sender are required" });
-      return;
-    }
-
-    //validate sender
-    if (sender !== "user" && sender !== "ai") {
-      res.status(400).json({
-        success: false,
-        error: "Sender must be either 'user' or 'ai'",
-      });
-      return;
+    //more compact validation
+    if (
+      !userId ||
+      !mongoose.Types.ObjectId.isValid(userId) ||
+      !message ||
+      !sender ||
+      !["user", "ai"].includes(sender)
+    ) {
+      return res.status(400).json({ success: false, error: "Invalid input" });
     }
 
     const newChatEntry = new ChatEntry({
@@ -98,16 +85,22 @@ export const newChatEntry = async (req, res) => {
       sender: sender,
       metadata: metadata || {},
     });
-
-    //TODO the question now is whem exactly should i use ai, the ai will
-    //TODO analyse and extract data if is memory worthy, and send the message
-    //TODO to the LLM, so, i have to actually return if there is a new memory
-    //TODO and the response that comes from the llm
-    //place holder for now
-    const aiResponse = "";
-
     await newChatEntry.save();
-    res.status(201).json({ success: true, data: aiResponse });
+
+    //check if message is new memory worthy and save it
+    const newMemory = await analyzeAndExtractMemory(userId, message);
+    if (newMemory) await newMemory.save();
+
+    // get filtered relevant user memories from DB 
+    const relatedMemories = await fetchRelevantMemories(userId, message);
+
+    const aiMessage = await getLLMResponse(message, relatedMemories);
+
+    //create and save ai response 
+    const aiChat = new ChatEntry({userId, message: aiMessage, sender: "ai"});
+    await aiChat.save();
+
+    res.status(201).json({ success: true, data: aiChat });
   } catch (error) {
     console.error("Error saving chat entry:", error);
     res.status(500).json({

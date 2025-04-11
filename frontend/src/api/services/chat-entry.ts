@@ -4,7 +4,8 @@ import api from "../axios";
 //todo this is up for change since the ai logic is still not implemented
 export interface newChatEntryResponse {
   success: boolean;
-  data: string; //this should be the ai response
+  memory ?: string; 
+  data: chatEntry;
 }
 
 export const newChatEntry = async (
