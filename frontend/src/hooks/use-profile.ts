@@ -13,6 +13,7 @@ import {
   signupRequest,
 } from "../api/services/auth";
 import axios from "axios";
+import { formattedMoodData } from "../types/mood-entry";
 
 type Profile = {
   _id: string;
@@ -23,7 +24,7 @@ type Profile = {
   birthDate?: Date | null;
   email: string;
   photo?: string;
-  moodEntries: string[];
+  moodData: formattedMoodData;
   memories: string[]; // Create a Memory type later
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -35,13 +36,9 @@ type Profile = {
   signup: (signup: SignupParams) => Promise<SignupResponse>;
   login: (login: LoginParams) => Promise<LoginResponse>;
   logout: () => Promise<LogoutResponse>;
+
+  
 };
-
-//todo i want to get the memories to be gotten with the rest of the profile, need to populate the backend
-
-//todo i don't really want the mood entries? i mean, the api call will get the averages, not the
-//todo mood entries itself, therefor instead of mood entries, it should have the averages
-//todo and update them everytime it gets updated (new mood entry) making the api call
 
 export const useProfile = create<Profile>()(
   persist(
@@ -55,6 +52,10 @@ export const useProfile = create<Profile>()(
       email: "",
       photo: "",
       moodEntries: [],
+      moodData: {
+        labels: [],
+        datasets: [],
+      },
       memories: [],
       createdAt: null,
       updatedAt: null,
@@ -94,7 +95,6 @@ export const useProfile = create<Profile>()(
             birthDate: response.data.birthDate
               ? new Date(response.data.birthDate)
               : null,
-            moodEntries: response.data.moodEntries || [],
             memories: response.data.memories || [],
             createdAt: response.data.createdAt
               ? new Date(response.data.createdAt)
@@ -130,7 +130,10 @@ export const useProfile = create<Profile>()(
             birthDate: null,
             email: "",
             photo: "",
-            moodEntries: [],
+            moodData: {
+              labels: [],
+              datasets: [],
+            },
             memories: [],
             createdAt: null,
             updatedAt: null,
@@ -162,7 +165,7 @@ export const useProfile = create<Profile>()(
         birthDate: state.birthDate,
         email: state.email,
         photo: state.photo,
-        moodEntries: state.moodEntries,
+        moodData: state.moodData,
         memories: state.memories,
         createdAt: state.createdAt,
         updatedAt: state.updatedAt,

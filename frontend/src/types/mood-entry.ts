@@ -11,7 +11,7 @@ export interface newMoodEntryResponse {
   data: moodEntry;
 }
 
-interface formattedMoodData {
+export interface formattedMoodData {
   labels: string[];
   datasets: {
     label: string;
