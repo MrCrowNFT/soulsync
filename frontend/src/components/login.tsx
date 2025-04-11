@@ -5,23 +5,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useProfile } from "@/hooks/use-profile";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  // Get the login method and state from the Zustand hook
+  const { login, isLoading, error } = useProfile();
+
+  // Local state for form inputs
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  //todo destructure zustard login here
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
 
-    //todo Call the login method from the Zustand store
-    const success = true;
+    try {
+      // Call the login method from Zustand 
+      await login({
+        username: username, 
+        password: password,
+      });
 
-    if (success) {
+      // Redirect on successful login
       window.location.href = "/home";
+    } catch (error) {
+      // Handle any errors not caught by the store
+      setLocalError(
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again."
+      );
     }
   };
 
@@ -34,18 +51,18 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
-              {error && (
+              {(error || localError) && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {error || "Login failed. Please try again."}
+                    {error || localError || "Login failed. Please try again."}
                   </AlertDescription>
                 </Alert>
               )}
               <div className="grid gap-2">
-                <Label htmlFor="email">Username</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
-                  type="username"
+                  type="text"
                   placeholder="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

@@ -17,7 +17,7 @@ export interface SignupResponse {
 }
 
 export interface LoginParams {
-  usename: string;
+  username: string;
   password: string;
 }
 
