@@ -23,7 +23,7 @@ export const setupResponseInterceptor = (api: AxiosInstance): void => {
         } catch (refreshError) {
           console.error("Authentication failed:", refreshError);
 
-          //todo redirect to login
+          window.location.href = "/login";
         }
       }
 

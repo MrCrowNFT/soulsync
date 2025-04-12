@@ -1,14 +1,6 @@
 import { useState } from "react";
-import { Frown, Meh, Smile, LucideIcon, Angry, Laugh } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
-
-//todo move this to types
-interface Mood {
-  value: number;
-  icon: LucideIcon;
-  label: string;
-  color: string;
-}
+import { moods } from "@/data/moods";
 
 const MoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
@@ -20,14 +12,6 @@ const MoodTracker: React.FC = () => {
     isLoading: state.isLoading,
     error: state.error,
   }));
-//todo  move this to data
-  const moods: Mood[] = [
-    { value: 1, icon: Angry, label: "Very Unhappy", color: "text-red-500" },
-    { value: 2, icon: Frown, label: "Unhappy", color: "text-orange-500" },
-    { value: 3, icon: Meh, label: "Neutral", color: "text-yellow-500" },
-    { value: 4, icon: Smile, label: "Happy", color: "text-lime-500" },
-    { value: 5, icon: Laugh, label: "Very Happy", color: "text-green-500" },
-  ];
 
   const handleChange = (moodValue: number): void => {
     setSelectedMood(moodValue);

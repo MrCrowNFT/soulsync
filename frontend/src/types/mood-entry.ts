@@ -1,3 +1,5 @@
+import { LucideIcon } from "lucide-react";
+
 export interface moodEntry {
   _id: string;
   userId: string;
@@ -30,4 +32,11 @@ export interface deleteMoodEntriesResponse {
   success: boolean;
   message: string;
   details?: string;
+}
+
+export interface Mood {
+  value: number;
+  icon: LucideIcon;
+  label: string;
+  color: string;
 }
