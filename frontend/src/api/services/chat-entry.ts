@@ -1,10 +1,8 @@
 import { chatEntry, deleteChatResponse, getChatParams, getChatResponse } from "../../types/chat";
 import api from "../axios";
 
-//todo this is up for change since the ai logic is still not implemented
 export interface newChatEntryResponse {
   success: boolean;
-  memory ?: string; 
   data: chatEntry;
 }
 
@@ -15,6 +13,7 @@ export const newChatEntry = async (
   return res.data;
 };
 
+//* Currently not using limit and skip, but may be useful in the future
 export const getChat = async (
   query?: getChatParams
 ): Promise<getChatResponse> => {

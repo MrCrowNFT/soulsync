@@ -19,6 +19,7 @@ export const getMoodEntries = async (
   return res.data;
 };
 
+//* Currently not using this
 export const deleteMoodEntries =
   async (): Promise<deleteMoodEntriesResponse> => {
     const res = await api.delete(`/mood/`);

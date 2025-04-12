@@ -13,7 +13,20 @@ import {
   signupRequest,
 } from "../api/services/auth";
 import axios from "axios";
-import { formattedMoodData } from "../types/mood-entry";
+import {
+  formattedMoodData,
+  getMoodEntriesResponse,
+  newMoodEntryResponse,
+} from "../types/mood-entry";
+import { deleteAccountResponse, updateUserPayload } from "@/types/user";
+import {
+  chatEntry,
+  deleteChatResponse,
+  getChatParams,
+  getChatResponse,
+} from "@/types/chat";
+import { newChatEntryResponse } from "@/api/services/chat-entry";
+import { deleteAccount, updateUser } from "@/api/services/user";
 
 type Profile = {
   _id: string;
@@ -25,6 +38,7 @@ type Profile = {
   email: string;
   photo?: string;
   moodData: formattedMoodData;
+  chat: chatEntry[];
   memories: string[]; // Create a Memory type later
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -37,7 +51,22 @@ type Profile = {
   login: (login: LoginParams) => Promise<LoginResponse>;
   logout: () => Promise<LogoutResponse>;
 
-  
+  //user
+  updateProfile: (updatePayload: updateUserPayload) => Promise<boolean>;
+  deleteAccount: () => Promise<boolean>;
+
+  //chat
+  newChat: (chatEntry: chatEntry) => Promise<newChatEntryResponse>;
+  getChat: (query?: getChatParams) => Promise<getChatResponse>;
+  deleteChat: () => Promise<boolean>;
+
+  //mood entries
+  newMood: (mood: number) => Promise<newMoodEntryResponse>;
+  getMoods: (
+    type: "weekly" | "monthly" | "yearly"
+  ) => Promise<getMoodEntriesResponse>;
+
+  //todo eventually need a method for user to check memories and delete them
 };
 
 export const useProfile = create<Profile>()(
@@ -56,6 +85,7 @@ export const useProfile = create<Profile>()(
         labels: [],
         datasets: [],
       },
+      chat: [],
       memories: [],
       createdAt: null,
       updatedAt: null,
@@ -63,6 +93,7 @@ export const useProfile = create<Profile>()(
       isLoading: false,
       error: null,
 
+      //AUTH
       signup: async (signup: SignupParams) => {
         set({ isLoading: true, error: null });
         try {
@@ -153,6 +184,89 @@ export const useProfile = create<Profile>()(
           throw error;
         }
       },
+      //USER PROFILE
+      updateProfile: async (updatePayload: updateUserPayload) => {
+        const previousState = { ...get() };
+        //optimistic update
+        set((state) => ({
+          ...state,
+          ...updatePayload,
+          isLoading: true,
+          error: null,
+        }));
+        try {
+          await updateUser(updatePayload);
+          // Update succeeded, update timestamp
+          set((state) => ({
+            ...state,
+            updatedAt: new Date(),
+            isLoading: false,
+          }));
+
+          return true;
+        } catch (error) {
+          // Rollback if API call fails
+          set({
+            ...previousState,
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to update profile",
+          });
+          return false;
+        }
+      },
+      deleteAccount: async () => {
+        const previousState = { ...get() };
+
+        set({ isLoading: true, error: null });
+        try {
+          await deleteAccount();
+          set({
+            _id: "",
+            name: "",
+            lastName: "",
+            username: "",
+            gender: "prefer-not-to-say",
+            birthDate: null,
+            email: "",
+            photo: "",
+            moodData: {
+              labels: [],
+              datasets: [],
+            },
+            memories: [],
+            createdAt: null,
+            updatedAt: null,
+            initialized: false,
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch (error) {
+          // Rollback if API call fails
+          set({
+            ...previousState,
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to delete profile",
+          });
+
+          return false;
+        }
+      },
+
+      //CHAT
+      newChat: (chatEntry: chatEntry) => {},
+      getChat: (query?: getChatParams) => {},
+      deleteChat: () => {},
+
+      //MOOD ENTRIES
+      newMood: (mood: number) => {},
+      getMoods: (type: "weekly" | "monthly" | "yearly") => {},
     }),
     {
       name: "profile-storage",
@@ -166,6 +280,7 @@ export const useProfile = create<Profile>()(
         email: state.email,
         photo: state.photo,
         moodData: state.moodData,
+        chat: state.chat,
         memories: state.memories,
         createdAt: state.createdAt,
         updatedAt: state.updatedAt,

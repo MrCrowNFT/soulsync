@@ -94,6 +94,7 @@ export const newChatEntry = async (req, res) => {
     // get filtered relevant user memories from DB 
     const relatedMemories = await fetchRelevantMemories(userId, message);
 
+    //todo need to add and send info about the user, 
     const aiMessage = await getLLMResponse(message, relatedMemories);
 
     //create and save ai response 
