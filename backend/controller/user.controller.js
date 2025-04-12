@@ -1,6 +1,6 @@
 import User from "../models/user.model";
 
-//todo not sure if will need this
+//todo This functions is not currently needed, user profile is gotten from the login function
 /**
  * Get user profile using _id from token
  * @route GET /user
@@ -9,7 +9,6 @@ import User from "../models/user.model";
 export const getUser = async (req, res) => {
   try {
     const userId = req.user._id;
-    //todo populate the memories, mood entries?
     const user = await User.findById(userId).select("-password");
     if (!user) {
       return res

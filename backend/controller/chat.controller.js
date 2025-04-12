@@ -6,12 +6,6 @@ import {
 } from "../utils/memory.util";
 
 //**We don't need a chat entry update method
-
-//todo check how infinite scroll works, maybe can do something like that
-//todo but backwards
-
-//** Remember, this needs a query on the frontend for the limit and skip
-
 /**
  * Get the chat entries when the user loads the chat
  * @param req -
@@ -85,7 +79,7 @@ export const newChatEntry = async (req, res) => {
     // get filtered relevant user memories from DB
     const relatedMemories = await fetchRelevantMemories(userId, message);
 
-    //todo need to add and send info about the user,
+    //todo need to add and send info about the user
     const aiMessage = await getLLMResponse(message, relatedMemories);
 
     //create and save ai response

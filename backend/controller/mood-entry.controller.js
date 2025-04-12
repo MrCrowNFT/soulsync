@@ -108,5 +108,4 @@ export const deleteMoodEntries = async (req, res) => {
   }
 };
 
-//todo the system is design to simply add and get, there's still no need for the
-//todo update function, still need t
+//* the system is design to simply add and get, there's still no need for the update function

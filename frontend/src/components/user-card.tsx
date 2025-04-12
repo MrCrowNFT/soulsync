@@ -4,6 +4,7 @@ import { Camera } from "lucide-react";
 import { updateUserPayload } from "@/types/user";
 import { useProfile } from "@/hooks/use-profile";
 
+//todo Evaluate if leaving the change password option here
 const UserCard: FunctionComponent = () => {
   // Get user data and updateProfile method from the state
   const {

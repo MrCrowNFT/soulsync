@@ -10,7 +10,7 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    //todo, need to populate the fields i require in the frontend
+    //todo eventually need to add popultate("memory"), when memory showing and deleting is added
     const user = await User.findOne({ username }).select("+password"); //explicitly select password for comparison
     if (!user) {
       res.status(401).json({ success: false, message: "Invalid username" });
