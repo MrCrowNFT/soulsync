@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Frown, Meh, Smile, LucideIcon, Angry, Laugh } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 
+//todo move this to types
 interface Mood {
   value: number;
   icon: LucideIcon;
@@ -19,7 +20,7 @@ const MoodTracker: React.FC = () => {
     isLoading: state.isLoading,
     error: state.error,
   }));
-
+//todo  move this to data
   const moods: Mood[] = [
     { value: 1, icon: Angry, label: "Very Unhappy", color: "text-red-500" },
     { value: 2, icon: Frown, label: "Unhappy", color: "text-orange-500" },
