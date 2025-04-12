@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Frown, Meh, Smile, LucideIcon, Angry, Laugh } from "lucide-react";
+import { useProfile } from "@/hooks/use-profile";
 
 interface Mood {
   value: number;
@@ -11,6 +12,13 @@ interface Mood {
 const MoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  // Get newMood and loading state from the profile store
+  const { newMood, isLoading, error } = useProfile((state) => ({
+    newMood: state.newMood,
+    isLoading: state.isLoading,
+    error: state.error,
+  }));
 
   const moods: Mood[] = [
     { value: 1, icon: Angry, label: "Very Unhappy", color: "text-red-500" },
@@ -24,17 +32,22 @@ const MoodTracker: React.FC = () => {
     setSelectedMood(moodValue);
   };
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     if (selectedMood !== null) {
-      setIsSubmitted(true);
+      // Use the newMood method from the profile store
+      const success = await newMood(selectedMood);
 
-      // Hide the tracker for 30 minutes (1800000 ms)
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setSelectedMood(null);
-      }, 1800000);
+      if (success) {
+        setIsSubmitted(true);
 
-      console.log(`Mood submitted: ${selectedMood}`);
+        // Hide the tracker for 30 minutes (1800000 ms)
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setSelectedMood(null);
+        }, 1800000);
+
+        console.log(`Mood submitted: ${selectedMood}`);
+      }
     }
   };
 
@@ -42,7 +55,7 @@ const MoodTracker: React.FC = () => {
     return (
       <div className="mt-5 flex w-full items-center justify-center">
         <div className="w-full max-w-md rounded-xl border border-blue-400 bg-white p-6 text-center text-gray-800 shadow-md transition-colors duration-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-          <p>Thanks for sharing how you feel! We`&apos;`ll check back later.</p>
+          <p>Thanks for sharing how you feel! We'll check back later.</p>
         </div>
       </div>
     );
@@ -86,17 +99,23 @@ const MoodTracker: React.FC = () => {
           })}
         </div>
 
+        {error && (
+          <div className="mb-4 rounded-md bg-red-100 p-3 text-center text-red-800 dark:bg-red-900 dark:text-red-100">
+            <p>{error}</p>
+          </div>
+        )}
+
         <div className="mt-6 text-center">
           <button
             onClick={handleSubmit}
-            disabled={selectedMood === null}
+            disabled={selectedMood === null || isLoading}
             className={`rounded-md px-6 py-2 font-medium transition-colors duration-200 ${
-              selectedMood === null
+              selectedMood === null || isLoading
                 ? "cursor-not-allowed bg-gray-300 text-gray-500"
                 : "cursor-pointer bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
             }`}
           >
-            Submit
+            {isLoading ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
