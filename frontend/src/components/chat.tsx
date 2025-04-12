@@ -1,50 +1,52 @@
 import { useState } from "react";
 import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
+import { useProfile } from "@/hooks/use-profile";
+import { useEffect } from "react";
 
 const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
-  const [messages, setMessages] = useState<Message[]>([]);
   const [showMoodTracker, setShowMoodTracker] = useState<boolean>(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get profile data from store including username and chat methods
+  const { chat, newChat, getChat, isLoading, username, error } = useProfile(
+    (state) => ({
+      chat: state.chat,
+      newChat: state.newChat,
+      getChat: state.getChat,
+      isLoading: state.isLoading,
+      username: state.username,
+      error: state.error,
+    })
+  );
+
+  // Load chat history when component mounts
+  useEffect(() => {
+    const loadChat = async () => {
+      await getChat();
+    };
+    loadChat();
+  }, [getChat]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: input.trim(),
-        isUser: true,
-        timestamp: new Date(),
-      };
-
-      setMessages([...messages, newMessage]);
+      // Send message using the newChat method from useProfile
+      await newChat(input.trim());
       setInput("");
 
       // Hide mood tracker once user starts chatting
       setShowMoodTracker(false);
-
-      // automated response ->
-      setTimeout(() => {
-        const responseMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: "Thanks for your message! This is a placeholder response.",
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages((prevMessages) => [...prevMessages, responseMessage]);
-      }, 1000);
     }
   };
 
   const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (!date) return "";
+    const dateObj = date instanceof Date ? date : new Date(date);
+    return dateObj.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -61,37 +63,72 @@ const Chat: React.FC = () => {
         {showMoodTracker && <MoodTracker />}
 
         <div className="flex flex-col space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.isUser ? "justify-end" : "justify-start"
-              }`}
-            >
+          {chat.length > 0 ? (
+            chat.map((entry, index) => (
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
-                  message.isUser
-                    ? "rounded-tr-none bg-blue-500 text-white"
-                    : "rounded-tl-none bg-white text-gray-800 dark:bg-gray-600 dark:text-gray-100"
+                key={entry._id || index}
+                className={`flex ${
+                  entry.sender === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                <p>{message.text}</p>
-                <p
-                  className={`mt-1 text-xs ${
-                    message.isUser
-                      ? "text-blue-100"
-                      : "text-gray-500 dark:text-gray-400"
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
+                    entry.sender === "user"
+                      ? "rounded-tr-none bg-blue-500 text-white"
+                      : "rounded-tl-none bg-white text-gray-800 dark:bg-gray-600 dark:text-gray-100"
                   }`}
                 >
-                  {formatTime(message.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))}
+                  {/* Display sender information */}
+                  <p
+                    className={`text-xs font-semibold mb-1 ${
+                      entry.sender === "user"
+                        ? "text-blue-100"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {entry.sender === "user" ? username : "Assistant"}
+                  </p>
 
-          {messages.length === 0 && !showMoodTracker && (
+                  <p>{entry.message}</p>
+
+                  {entry.createdAt && (
+                    <p
+                      className={`mt-1 text-xs ${
+                        entry.sender === "user"
+                          ? "text-blue-100"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {formatTime(entry.createdAt)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : !showMoodTracker ? (
             <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
               <p>Start a conversation...</p>
+            </div>
+          ) : null}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="rounded-2xl rounded-tl-none bg-white px-4 py-2 text-gray-800 shadow-sm dark:bg-gray-600 dark:text-gray-100">
+                <p className="text-xs font-semibold mb-1 text-gray-500 dark:text-gray-400">
+                  Assistant
+                </p>
+                <p>Thinking...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error message */}
+          {error && (
+            <div className="flex justify-center">
+              <div className="rounded-2xl bg-red-100 px-4 py-2 text-red-800 shadow-sm dark:bg-red-900 dark:text-red-100">
+                <p>Error: {error}</p>
+              </div>
             </div>
           )}
         </div>
@@ -119,6 +156,7 @@ const Chat: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
+            disabled={isLoading}
           />
 
           <SmileIcon
@@ -130,9 +168,9 @@ const Chat: React.FC = () => {
         {/* Send Button */}
         <button
           type="submit"
-          disabled={!input.trim()}
+          disabled={!input.trim() || isLoading}
           className={`rounded-full p-3 text-white shadow-md transition-all ${
-            input.trim()
+            input.trim() && !isLoading
               ? "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               : "cursor-not-allowed bg-blue-300 opacity-70 dark:bg-blue-700"
           }`}

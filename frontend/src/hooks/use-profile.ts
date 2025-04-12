@@ -260,6 +260,7 @@ export const useProfile = create<Profile>()(
         };
         const tempEntry: chatEntry = {
           ...newEntry,
+          _id: `temp-${Date.now()}`,
           createdAt: new Date(),
         };
         set((state) => ({
