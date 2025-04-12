@@ -12,7 +12,7 @@ export const newMoodEntryRequest = async (
   return res.data;
 };
 
-export const getMoodEntries = async (
+export const getMoodData = async (
   type: "weekly" | "monthly" | "yearly"
 ): Promise<getMoodEntriesResponse> => {
   const res = await api.get(`/mood/${type}`);

@@ -18,6 +18,8 @@ import { updateUserPayload } from "@/types/user";
 import { chatEntry } from "@/types/chat";
 import { deleteChat, getChat, newChatEntry } from "@/api/services/chat-entry";
 import { deleteAccount, updateUser } from "@/api/services/user";
+import { getMoodData, newMoodEntryRequest } from "@/api/services/mood-entry";
+
 
 type Profile = {
   _id: string;
@@ -336,8 +338,46 @@ export const useProfile = create<Profile>()(
       },
 
       //MOOD ENTRIES
-      newMood: (mood: number) => {},
-      getMoods: (type: "weekly" | "monthly" | "yearly") => {},
+      //newMood will not update any state, since the moods
+      //need to be set into averages for it to be used on dashboard
+      newMood: async (mood: number) => {
+        set({ isLoading: true, error: null });
+        try {
+          await newMoodEntryRequest(mood);
+          set({ isLoading: false, error: null });
+          return true;
+        } catch (error) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error ? error.message : "Failed to add new Mood",
+          });
+          return false;
+        }
+      },
+      getMoods: async (type: "weekly" | "monthly" | "yearly") => {
+        const previousMoodData={...get().moodData};
+        set({isLoading:true, error: null})
+        try{
+          const moodData = await getMoodData(type)
+          set({
+            moodData: moodData.data,
+            isLoading: false,
+            error: null,
+          })
+          return true
+
+        }catch(error){
+          set((state)=>({
+            ...state, 
+            moodData:previousMoodData,
+            isLoading: false,
+            error:
+              error instanceof Error ? error.message : "Failed to get moods data",
+          }));
+          return false;
+        }
+      },
     }),
     {
       name: "profile-storage",
