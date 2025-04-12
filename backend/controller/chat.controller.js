@@ -1,8 +1,9 @@
-//todo in this chat i need to integrate the ai utils
-
 import ChatEntry from "../models/chat-entry.model";
 import { getLLMResponse } from "../utils/ai.util";
-import { analyzeAndExtractMemory, fetchRelevantMemories } from "../utils/memory.util";
+import {
+  analyzeAndExtractMemory,
+  fetchRelevantMemories,
+} from "../utils/memory.util";
 
 //**We don't need a chat entry update method
 
@@ -28,13 +29,9 @@ export const getChatEntries = async (req, res) => {
         .json({ success: false, message: "invalid user id" });
     }
 
-    const limit = parseInt(req.query.limit) || 100; //default to 100 entries
-    const skip = parseInt(req.query.skip) || 0;
-
     const chatEntries = await ChatEntry.find({ userId: userId })
       .sort({ createdAt: -1 }) //get most recent
-      .skip(skip)
-      .limit(limit);
+      .limit(limit); //default to 100 entries
 
     if (!chatEntries || chatEntries.length === 0) {
       return res.status(404).json({
@@ -46,12 +43,6 @@ export const getChatEntries = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: chatEntries,
-      //leave this like this for now, but is a chat, so no pagination
-      pagination: {
-        limit,
-        skip,
-        hasMore: chatEntries.length === limit,
-      },
     });
   } catch (error) {
     console.error("Error retrieving chat entries:", error);
@@ -91,16 +82,17 @@ export const newChatEntry = async (req, res) => {
     const newMemory = await analyzeAndExtractMemory(userId, message);
     if (newMemory) await newMemory.save();
 
-    // get filtered relevant user memories from DB 
+    // get filtered relevant user memories from DB
     const relatedMemories = await fetchRelevantMemories(userId, message);
 
-    //todo need to add and send info about the user, 
+    //todo need to add and send info about the user,
     const aiMessage = await getLLMResponse(message, relatedMemories);
 
-    //create and save ai response 
-    const aiChat = new ChatEntry({userId, message: aiMessage, sender: "ai"});
+    //create and save ai response
+    const aiChat = new ChatEntry({ userId, message: aiMessage, sender: "ai" });
     await aiChat.save();
 
+    //todo maybe also return the newChatEntry and the memory if any
     res.status(201).json({ success: true, data: aiChat });
   } catch (error) {
     console.error("Error saving chat entry:", error);

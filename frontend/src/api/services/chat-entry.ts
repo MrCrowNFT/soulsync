@@ -1,4 +1,8 @@
-import { chatEntry, deleteChatResponse, getChatParams, getChatResponse } from "../../types/chat";
+import {
+  chatEntry,
+  deleteChatResponse,
+  getChatResponse,
+} from "../../types/chat";
 import api from "../axios";
 
 export interface newChatEntryResponse {
@@ -13,11 +17,8 @@ export const newChatEntry = async (
   return res.data;
 };
 
-//* Currently not using limit and skip, but may be useful in the future
-export const getChat = async (
-  query?: getChatParams
-): Promise<getChatResponse> => {
-  const res = await api.get("/chat/", { params: query });
+export const getChat = async (): Promise<getChatResponse> => {
+  const res = await api.get("/chat/");
   return res.data;
 };
 

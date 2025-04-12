@@ -13,19 +13,10 @@ import {
   signupRequest,
 } from "../api/services/auth";
 import axios from "axios";
-import {
-  formattedMoodData,
-  getMoodEntriesResponse,
-  newMoodEntryResponse,
-} from "../types/mood-entry";
-import { deleteAccountResponse, updateUserPayload } from "@/types/user";
-import {
-  chatEntry,
-  deleteChatResponse,
-  getChatParams,
-  getChatResponse,
-} from "@/types/chat";
-import { newChatEntryResponse } from "@/api/services/chat-entry";
+import { formattedMoodData } from "../types/mood-entry";
+import { updateUserPayload } from "@/types/user";
+import { chatEntry } from "@/types/chat";
+import { deleteChat, getChat, newChatEntry } from "@/api/services/chat-entry";
 import { deleteAccount, updateUser } from "@/api/services/user";
 
 type Profile = {
@@ -56,15 +47,13 @@ type Profile = {
   deleteAccount: () => Promise<boolean>;
 
   //chat
-  newChat: (chatEntry: chatEntry) => Promise<newChatEntryResponse>;
-  getChat: (query?: getChatParams) => Promise<getChatResponse>;
+  newChat: (message: string) => Promise<boolean>;
+  getChat: () => Promise<boolean>;
   deleteChat: () => Promise<boolean>;
 
   //mood entries
-  newMood: (mood: number) => Promise<newMoodEntryResponse>;
-  getMoods: (
-    type: "weekly" | "monthly" | "yearly"
-  ) => Promise<getMoodEntriesResponse>;
+  newMood: (mood: number) => Promise<boolean>;
+  getMoods: (type: "weekly" | "monthly" | "yearly") => Promise<boolean>;
 
   //todo eventually need a method for user to check memories and delete them
 };
@@ -260,9 +249,91 @@ export const useProfile = create<Profile>()(
       },
 
       //CHAT
-      newChat: (chatEntry: chatEntry) => {},
-      getChat: (query?: getChatParams) => {},
-      deleteChat: () => {},
+      newChat: async (message: string) => {
+        //i can't send the entry with createdAt, since that
+        //is assigned on the backend
+        const newEntry: chatEntry = {
+          message: message,
+          sender: "user",
+        };
+        const tempEntry: chatEntry = {
+          ...newEntry,
+          createdAt: new Date(),
+        };
+        set((state) => ({
+          chat: [...state.chat, tempEntry],
+          isLoading: true,
+          error: null,
+        }));
+
+        try {
+          //only getting the ai response from backend
+          //so i should not just delete tempEntry
+          const aiResponse = await newChatEntry(newEntry);
+          set((state) => ({
+            chat: [...state.chat, aiResponse.data],
+            isLoading: false,
+          }));
+          return true;
+        } catch (error) {
+          //don't really need to delete the last message
+          //since that one was sent by user
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to get ai response",
+          });
+          return false;
+        }
+      },
+      //currently getting las 100 messages by default
+      getChat: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const chat = await getChat();
+          set({
+            chat: chat.data,
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch (error) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error ? error.message : "Failed to get chat",
+          });
+          return false;
+        }
+      },
+      //*note this deletes the whole chat but not the memories
+      deleteChat: async () => {
+        const previousChat = { ...get().chat };
+
+        set({ isLoading: true, error: null });
+        try {
+          await deleteChat();
+          set({
+            chat: [],
+            isLoading: false,
+            error: null,
+          });
+          return true;
+        } catch (error) {
+          // Rollback if API call fails
+          set((state) => ({
+            ...state,
+            chat: previousChat,
+            isLoading: false,
+            error:
+              error instanceof Error ? error.message : "Failed to delete chat",
+          }));
+
+          return false;
+        }
+      },
 
       //MOOD ENTRIES
       newMood: (mood: number) => {},
