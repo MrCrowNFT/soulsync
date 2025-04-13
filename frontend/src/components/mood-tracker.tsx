@@ -1,46 +1,68 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { moods } from "@/data/moods";
 
 const MoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [localLoading, setLocalLoading] = useState<boolean>(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  // Get newMood and loading state from the profile store
-  const { newMood, isLoading, error } = useProfile((state) => ({
+  // Only get the newMood method and check if user is authenticated
+  const { newMood, isAuthenticated } = useProfile((state) => ({
     newMood: state.newMood,
-    isLoading: state.isLoading,
-    error: state.error,
+    // Check if user is authenticated by checking if username exists
+    isAuthenticated: !!state.username && !!state._id,
   }));
 
   const handleChange = (moodValue: number): void => {
     setSelectedMood(moodValue);
   };
 
-  const handleSubmit = async (): Promise<void> => {
-    if (selectedMood !== null) {
-      // Use the newMood method from the profile store
-      const success = await newMood(selectedMood);
+  const handleSubmit = useCallback(async (): Promise<void> => {
+    if (selectedMood !== null && isAuthenticated) {
+      setLocalLoading(true);
+      setLocalError(null);
 
-      if (success) {
-        setIsSubmitted(true);
+      try {
+        const success = await newMood(selectedMood);
 
-        // Hide the tracker for 30 minutes (1800000 ms)
-        setTimeout(() => {
-          setIsSubmitted(false);
-          setSelectedMood(null);
-        }, 1800000);
+        if (success) {
+          setIsSubmitted(true);
 
-        console.log(`Mood submitted: ${selectedMood}`);
+          // Hide the tracker for 30 minutes 
+          setTimeout(() => {
+            setIsSubmitted(false);
+            setSelectedMood(null);
+          }, 1800000);
+        } else {
+          setLocalError("Failed to submit mood");
+        }
+      } catch (err) {
+        setLocalError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLocalLoading(false);
       }
+    } else if (!isAuthenticated) {
+      setLocalError("You must be logged in to track your mood");
     }
-  };
+  }, [selectedMood, newMood, isAuthenticated]);
 
   if (isSubmitted) {
     return (
       <div className="mt-5 flex w-full items-center justify-center">
         <div className="w-full max-w-md rounded-xl border border-blue-400 bg-white p-6 text-center text-gray-800 shadow-md transition-colors duration-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
           <p>Thanks for sharing how you feel! We'll check back later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="mt-5 flex w-full items-center justify-center">
+        <div className="w-full max-w-md rounded-xl border border-blue-400 bg-white p-6 text-center text-gray-800 shadow-md transition-colors duration-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+          <p>Please log in to track your mood</p>
         </div>
       </div>
     );
@@ -84,23 +106,23 @@ const MoodTracker: React.FC = () => {
           })}
         </div>
 
-        {error && (
+        {localError && (
           <div className="mb-4 rounded-md bg-red-100 p-3 text-center text-red-800 dark:bg-red-900 dark:text-red-100">
-            <p>{error}</p>
+            <p>{localError}</p>
           </div>
         )}
 
         <div className="mt-6 text-center">
           <button
             onClick={handleSubmit}
-            disabled={selectedMood === null || isLoading}
+            disabled={selectedMood === null || localLoading}
             className={`rounded-md px-6 py-2 font-medium transition-colors duration-200 ${
-              selectedMood === null || isLoading
+              selectedMood === null || localLoading
                 ? "cursor-not-allowed bg-gray-300 text-gray-500"
                 : "cursor-pointer bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
             }`}
           >
-            {isLoading ? "Submitting..." : "Submit"}
+            {localLoading ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>

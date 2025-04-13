@@ -20,7 +20,6 @@ import { deleteChat, getChat, newChatEntry } from "@/api/services/chat-entry";
 import { deleteAccount, updateUser } from "@/api/services/user";
 import { getMoodData, newMoodEntryRequest } from "@/api/services/mood-entry";
 
-
 type Profile = {
   _id: string;
   name: string;
@@ -177,6 +176,11 @@ export const useProfile = create<Profile>()(
       },
       //USER PROFILE
       updateProfile: async (updatePayload: updateUserPayload) => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         const previousState = { ...get() };
         //optimistic update
         set((state) => ({
@@ -209,6 +213,11 @@ export const useProfile = create<Profile>()(
         }
       },
       deleteAccount: async () => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         const previousState = { ...get() };
 
         set({ isLoading: true, error: null });
@@ -252,6 +261,11 @@ export const useProfile = create<Profile>()(
 
       //CHAT
       newChat: async (message: string) => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         //i can't send the entry with createdAt, since that
         //is assigned on the backend
         const newEntry: chatEntry = {
@@ -293,6 +307,11 @@ export const useProfile = create<Profile>()(
       },
       //currently getting las 100 messages by default
       getChat: async () => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         set({ isLoading: true, error: null });
         try {
           const chat = await getChat();
@@ -313,6 +332,11 @@ export const useProfile = create<Profile>()(
       },
       //*note this deletes the whole chat but not the memories
       deleteChat: async () => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         const previousChat = { ...get().chat };
 
         set({ isLoading: true, error: null });
@@ -342,6 +366,11 @@ export const useProfile = create<Profile>()(
       //newMood will not update any state, since the moods
       //need to be set into averages for it to be used on dashboard
       newMood: async (mood: number) => {
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
         set({ isLoading: true, error: null });
         try {
           await newMoodEntryRequest(mood);
@@ -357,24 +386,30 @@ export const useProfile = create<Profile>()(
         }
       },
       getMoods: async (type: "weekly" | "monthly" | "yearly") => {
-        const previousMoodData={...get().moodData};
-        set({isLoading:true, error: null})
-        try{
-          const moodData = await getMoodData(type)
+        // Check if user is logged in
+        if (!get()._id) {
+          set({ error: "You must be logged in to chat" });
+          return false;
+        }
+        const previousMoodData = { ...get().moodData };
+        set({ isLoading: true, error: null });
+        try {
+          const moodData = await getMoodData(type);
           set({
             moodData: moodData.data,
             isLoading: false,
             error: null,
-          })
-          return true
-
-        }catch(error){
-          set((state)=>({
-            ...state, 
-            moodData:previousMoodData,
+          });
+          return true;
+        } catch (error) {
+          set((state) => ({
+            ...state,
+            moodData: previousMoodData,
             isLoading: false,
             error:
-              error instanceof Error ? error.message : "Failed to get moods data",
+              error instanceof Error
+                ? error.message
+                : "Failed to get moods data",
           }));
           return false;
         }

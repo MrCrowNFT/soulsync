@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
@@ -6,55 +6,70 @@ import { useProfile } from "@/hooks/use-profile";
 const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
   const [showMoodTracker, setShowMoodTracker] = useState<boolean>(true);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  // Get profile data from store including username and chat methods
-  const { chat, newChat, getChat, isLoading, username, error } = useProfile(
+  // Use a ref to track if we've already initiated the fetch
+  const chatFetchedRef = useRef<boolean>(false);
+
+  // Get profile data with memoized selector to prevent unnecessary re-renders
+  const { chat, newChat, getChat, isLoading, error, username } = useProfile(
     (state) => ({
       chat: state.chat,
       newChat: state.newChat,
       getChat: state.getChat,
       isLoading: state.isLoading,
-      username: state.username,
       error: state.error,
+      username: state.username,
     })
   );
 
-
+  // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
-    // Only attempt to load chat if username exists (user is logged in)
-    if (username) {
+    // Only execute if username exists, we haven't initialized yet, and haven't fetched chat
+    if (username && !isInitialized && !chatFetchedRef.current) {
+      chatFetchedRef.current = true; // Mark as fetched to prevent repeat calls
+
       const loadChat = async () => {
         try {
           await getChat();
+          setIsInitialized(true);
         } catch (err) {
           console.error("Failed to load chat:", err);
+          setIsInitialized(true); // Still mark as initialized even if it fails
         }
       };
 
       loadChat();
+    } else if (!username) {
+      // If no username, still mark as initialized to prevent future fetch attempts
+      setIsInitialized(true);
     }
-  }, [username]); 
+  }, [username, getChat, isInitialized]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      // Send message using the newChat method from useProfile
-      await newChat(input.trim());
-      setInput("");
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (input.trim() && username) {
+        try {
+          await newChat(input.trim());
+          setInput("");
+          setShowMoodTracker(false);
+        } catch (err) {
+          console.error("Failed to send message:", err);
+        }
+      }
+    },
+    [input, username, newChat]
+  );
 
-      // Hide mood tracker once user starts chatting
-      setShowMoodTracker(false);
-    }
-  };
-
-  const formatTime = (date: Date): string => {
+  const formatTime = useCallback((date: Date): string => {
     if (!date) return "";
     const dateObj = date instanceof Date ? date : new Date(date);
     return dateObj.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }, []);
 
   return (
     <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
@@ -67,14 +82,13 @@ const Chat: React.FC = () => {
 
       {/* Messages Container */}
       <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
-        {/* Show mood tracker if no chat or explicitly set to show */}
-        {showMoodTracker && <MoodTracker />}
+        {showMoodTracker && username && <MoodTracker />}
 
         <div className="flex flex-col space-y-4">
-          {chat.length > 0 ? (
+          {chat && chat.length > 0 ? (
             chat.map((entry, index) => (
               <div
-                key={entry._id || index}
+                key={entry._id || `message-${index}`}
                 className={`flex ${
                   entry.sender === "user" ? "justify-end" : "justify-start"
                 }`}
@@ -121,6 +135,10 @@ const Chat: React.FC = () => {
                   : "Please log in to start chatting"}
               </p>
             </div>
+          ) : !username ? (
+            <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
+              <p>Please log in to start chatting</p>
+            </div>
           ) : null}
 
           {/* Loading indicator */}
@@ -161,7 +179,9 @@ const Chat: React.FC = () => {
         <div className="flex flex-grow items-center rounded-full border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
           <ImageIcon
             size={20}
-            className="mr-2 cursor-pointer text-gray-500 dark:text-gray-400"
+            className={`mr-2 ${
+              username ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+            } text-gray-500 dark:text-gray-400`}
           />
 
           <input
@@ -176,7 +196,9 @@ const Chat: React.FC = () => {
 
           <SmileIcon
             size={20}
-            className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400"
+            className={`ml-2 ${
+              username ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+            } text-gray-500 dark:text-gray-400`}
           />
         </div>
 
