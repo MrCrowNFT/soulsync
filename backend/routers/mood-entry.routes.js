@@ -3,7 +3,7 @@ import {
   deleteMoodEntries,
   getEntries,
   newMoodEntry,
-} from "../controller/mood-entry.controller";
+} from "../controller/mood-entry.controller.js";
 
 const moodEntryRouter = express.Router();
 

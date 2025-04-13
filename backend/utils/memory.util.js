@@ -1,6 +1,6 @@
 import nlp from "compromise";
 import Sentiment from "sentiment";
-import { Memory } from "../models/memory.model";
+import { Memory } from "../models/memory.model.js";
 
 // sentiment analyzer
 const sentimentAnalyzer = new Sentiment();

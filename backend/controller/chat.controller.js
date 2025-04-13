@@ -1,5 +1,5 @@
-import ChatEntry from "../models/chat-entry.model";
-import { getLLMResponse } from "../utils/ai.util";
+import ChatEntry from "../models/chat-entry.model.js";
+import { getLLMResponse } from "../utils/ai.util.js";
 import {
   analyzeAndExtractMemory,
   fetchRelevantMemories,

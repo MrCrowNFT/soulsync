@@ -1,4 +1,4 @@
-import User from "../models/user.model";
+import User from "../models/user.model.js";
 
 //todo This functions is not currently needed, user profile is gotten from the login function
 /**

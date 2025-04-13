@@ -1,6 +1,6 @@
-import { MoodEntry } from "../models/mood-entry.model";
+import { MoodEntry } from "../models/mood-entry.model.js";
 import mongoose from "mongoose";
-import { getMoodAverages } from "../helpers/mood-entry.helper";
+import { getMoodAverages } from "../helpers/mood-entry.helper.js";
 
 export const newMoodEntry = async (req, res) => {
   try {
@@ -57,7 +57,6 @@ export const getEntries = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, error: "userId and type are required" });
-      
     }
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res

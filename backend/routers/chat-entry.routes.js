@@ -3,7 +3,7 @@ import {
   deleteChatEntries,
   getChatEntries,
   newChatEntry,
-} from "../controller/chat.controller";
+} from "../controller/chat.controller.js";
 
 const chatEntryRouter = express.Router();
 
