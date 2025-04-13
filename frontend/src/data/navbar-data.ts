@@ -1,5 +1,5 @@
 export const mainNavItems = [
-  { path: "/home", label: "Home" },
+  { path: "/", label: "Home" },
   { path: "/dashboard", label: "Dashboard" },
   { path: "/chat", label: "Chatbot" },
 ];

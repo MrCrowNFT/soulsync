@@ -31,7 +31,7 @@ export function LoginForm({
       });
 
       // Redirect on successful login
-      window.location.href = "/home";
+      window.location.href = "/";
     } catch (error) {
       // Handle any errors not caught by the store
       setLocalError(
