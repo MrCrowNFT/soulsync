@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
-import { useEffect } from "react";
 
 const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
@@ -20,13 +19,21 @@ const Chat: React.FC = () => {
     })
   );
 
-  // Load chat history when component mounts
+
   useEffect(() => {
-    const loadChat = async () => {
-      await getChat();
-    };
-    loadChat();
-  }, [getChat]);
+    // Only attempt to load chat if username exists (user is logged in)
+    if (username) {
+      const loadChat = async () => {
+        try {
+          await getChat();
+        } catch (err) {
+          console.error("Failed to load chat:", err);
+        }
+      };
+
+      loadChat();
+    }
+  }, [username]); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +67,7 @@ const Chat: React.FC = () => {
 
       {/* Messages Container */}
       <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
+        {/* Show mood tracker if no chat or explicitly set to show */}
         {showMoodTracker && <MoodTracker />}
 
         <div className="flex flex-col space-y-4">
@@ -107,7 +115,11 @@ const Chat: React.FC = () => {
             ))
           ) : !showMoodTracker ? (
             <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
-              <p>Start a conversation...</p>
+              <p>
+                {username
+                  ? "Start a conversation..."
+                  : "Please log in to start chatting"}
+              </p>
             </div>
           ) : null}
 
@@ -140,6 +152,7 @@ const Chat: React.FC = () => {
         <button
           type="button"
           className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          disabled={!username}
         >
           <PaperclipIcon size={20} />
         </button>
@@ -155,8 +168,10 @@ const Chat: React.FC = () => {
             className="flex-grow rounded-full bg-transparent p-2 text-gray-700 outline-none dark:text-gray-100"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            disabled={isLoading}
+            placeholder={
+              username ? "Type a message..." : "Please log in to chat"
+            }
+            disabled={isLoading || !username}
           />
 
           <SmileIcon
@@ -168,9 +183,9 @@ const Chat: React.FC = () => {
         {/* Send Button */}
         <button
           type="submit"
-          disabled={!input.trim() || isLoading}
+          disabled={!input.trim() || isLoading || !username}
           className={`rounded-full p-3 text-white shadow-md transition-all ${
-            input.trim() && !isLoading
+            input.trim() && !isLoading && username
               ? "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               : "cursor-not-allowed bg-blue-300 opacity-70 dark:bg-blue-700"
           }`}

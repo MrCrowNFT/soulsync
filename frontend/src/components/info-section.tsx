@@ -2,29 +2,28 @@ import { motion } from "framer-motion";
 
 const InfoSection = () => {
   return (
-    <div className="flex flex-col space-y-16 bg-white p-6 transition-colors duration-300 dark:bg-gray-950">
+    <div className="flex flex-col space-y-24 bg-background py-16 px-6 md:px-12 transition-colors duration-300">
       {/* Section 1 */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="mt-10 flex flex-col items-center justify-center gap-8 md:flex-row"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="flex flex-col items-center justify-center gap-10 md:flex-row"
       >
-        <img
-          src=""
-          alt="For you 24/7"
-          className="w-full object-cover md:w-1/2"
-        />
-        <div className="max-w-md text-center md:text-left">
-          <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
-            For you 24/7
-          </h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300">
-            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Omnis
-            nesciunt corrupti minima sapiente perferendis distinctio numquam
-            reprehenderit, dolorem dicta culpa laudantium temporibus fugiat
-            alias, quasi veniam dolores eaque laborum odit?
+        <div className="w-full md:w-1/2 rounded-xl bg-muted aspect-video flex items-center justify-center overflow-hidden">
+          <img
+            src="/api/placeholder/600/400"
+            alt="For you 24/7"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="max-w-md space-y-4 text-center md:text-left">
+          <h2 className="text-2xl font-bold text-foreground">For you 24/7</h2>
+          <p className="text-lg text-muted-foreground">
+            Access personalized mental health support whenever you need it. Our
+            AI coach is available around the clock to provide guidance,
+            exercises, and a listening ear during difficult moments.
           </p>
         </div>
       </motion.div>
@@ -34,25 +33,26 @@ const InfoSection = () => {
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mt-10 flex flex-col items-center justify-center gap-8 md:flex-row"
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+        className="flex flex-col-reverse items-center justify-center gap-10 md:flex-row"
       >
-        <div className="max-w-md text-center md:text-left">
-          <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Track your progress
+        <div className="max-w-md space-y-4 text-center md:text-left">
+          <h2 className="text-2xl font-bold text-foreground">
+            Track Your Progress
           </h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300">
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Modi
-            itaque enim voluptates ea? At harum ratione neque voluptatum unde,
-            consequatur voluptates tempora veniam necessitatibus, atque cumque
-            omnis? Reiciendis, repellat blanditiis?
+          <p className="text-lg text-muted-foreground">
+            Monitor your emotional wellbeing with our intuitive mood tracking
+            tools. Visualize patterns, identify triggers, and celebrate your
+            growth journey with easy-to-understand insights and analytics.
           </p>
         </div>
-        <img
-          src="/path-to-your-image2.jpg"
-          alt="Track your progress"
-          className="w-full object-cover md:w-1/2"
-        />
+        <div className="w-full md:w-1/2 rounded-xl bg-muted aspect-video flex items-center justify-center overflow-hidden">
+          <img
+            src="/api/placeholder/600/400"
+            alt="Track your progress"
+            className="w-full h-full object-cover"
+          />
+        </div>
       </motion.div>
 
       {/* Section 3 */}
@@ -60,27 +60,30 @@ const InfoSection = () => {
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="mt-10 flex flex-col items-center justify-center gap-8 md:flex-row"
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+        className="flex flex-col items-center justify-center gap-10 md:flex-row"
       >
-        <img
-          src="/path-to-your-image3.jpg"
-          alt="Personalized Recommendations"
-          className="w-full object-cover md:w-1/2"
-        />
-        <div className="max-w-md text-center md:text-left">
-          <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <div className="w-full md:w-1/2 rounded-xl bg-muted aspect-video flex items-center justify-center overflow-hidden">
+          <img
+            src="/api/placeholder/600/400"
+            alt="Personalized Recommendations"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="max-w-md space-y-4 text-center md:text-left">
+          <h2 className="text-2xl font-bold text-foreground">
             Personalized Recommendations
           </h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Debitis
-            nulla vel sit exercitationem iste cum atque saepe cupiditate,
-            explicabo eveniet a eos libero, neque esse commodi nobis hic tempore
-            eaque!
+          <p className="text-lg text-muted-foreground">
+            Receive tailored suggestions for activities, resources, and
+            techniques based on your unique needs and preferences. Our AI
+            analyzes your progress to recommend the most effective strategies
+            for your mental health journey.
           </p>
         </div>
       </motion.div>
     </div>
   );
 };
+
 export default InfoSection;
