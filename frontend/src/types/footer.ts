@@ -19,6 +19,5 @@ export interface SocialLink {
 export interface FooterProps {
   footerCategories?: FooterCategory[];
   socialLinks?: SocialLink[];
-  logoComponent?: React.ReactNode;
   companyName?: string;
 }

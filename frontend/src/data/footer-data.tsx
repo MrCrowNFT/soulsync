@@ -60,3 +60,6 @@ export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
     label: "LinkedIn",
   },
 ];
+
+export const DEFAUL_LOGO_COMPONENT="/mental-health-icon.svg"
+ 
