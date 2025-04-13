@@ -7,7 +7,7 @@ const refreshTokenSchema = new mongoose.Schema({
     unique: true,
   },
   user: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
@@ -24,4 +24,5 @@ const refreshTokenSchema = new mongoose.Schema({
 // index for faster lookups and automatic removal of expired tokens
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const RefreshToken = mongoose.model("RefreshToken", refreshTokenSchema);
+const RefreshToken = mongoose.model("RefreshToken", refreshTokenSchema);
+export default RefreshToken;

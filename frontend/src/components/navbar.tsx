@@ -4,7 +4,7 @@ import DarkModeToggle from "./dark-mode-toggle";
 import { mainNavItems, authNavItems } from "../data/navbar-data";
 
 const Navbar: React.FC = () => {
-  const logoSrc = "../public/mental-health-icon.svg";
+  const logoSrc = "/mental-health-icon.svg";
 
   return (
     <div className="sticky top-0 h-auto p-6 z-50">

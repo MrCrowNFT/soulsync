@@ -1,4 +1,4 @@
-import MoodEntry from "../models/mood-entry.model.js";
+import {MoodEntry} from "../models/mood-entry.model.js";
 import { formatMoodData } from "../utils/mood-entry.util.js";
 
 //Helper functions

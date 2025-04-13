@@ -7,7 +7,7 @@ import Chat from "./components/chat";
 import { LoginForm } from "./components/login";
 import { SignupForm } from "./components/signup";
 
-//todo ROUTES
+
 function App() {
   return (
     <>

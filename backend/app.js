@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import connectDB from "./config/db";
+import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import authRouter from "./routers/auth.routes.js";
 import moodEntryRouter from "./routers/mood-entry.routes.js";
@@ -17,10 +17,10 @@ app.use(cors()); //allow all origins for now
 app.use("/auth", authRouter);
 app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
-app.use("/user", authenticatem, userRouter);
+app.use("/user", authenticate, userRouter);
 
 const PORT = process.env.PORT || 5500;
-app.liste(PORT, () => {
+app.listen(PORT, () => {
   connectDB();
   console.log("Server started at http://localhost:" + PORT);
 });

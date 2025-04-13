@@ -3,7 +3,7 @@ import { getLLMResponse } from "../utils/ai.util.js";
 import {
   analyzeAndExtractMemory,
   fetchRelevantMemories,
-} from "../utils/memory.util";
+} from "../utils/memory.util.js";
 
 //**We don't need a chat entry update method
 /**
