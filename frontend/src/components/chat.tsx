@@ -8,20 +8,18 @@ const Chat: React.FC = () => {
   const [showMoodTracker, setShowMoodTracker] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  // Use a ref to track if we've already initiated the fetch
+  // ref to track if already initiated the fetch
   const chatFetchedRef = useRef<boolean>(false);
 
-  // Get profile data with memoized selector to prevent unnecessary re-renders
-  const { chat, newChat, getChat, isLoading, error, username } = useProfile(
-    (state) => ({
-      chat: state.chat,
-      newChat: state.newChat,
-      getChat: state.getChat,
-      isLoading: state.isLoading,
-      error: state.error,
-      username: state.username,
-    })
-  );
+  // Get profile data -> select each value individually to prevent unnecessary re-renders
+  const username = useProfile((state) => state.username);
+  const chat = useProfile((state) => state.chat);
+  const isLoading = useProfile((state) => state.isLoading);
+  const error = useProfile((state) => state.error);
+
+
+  const getChat = useProfile((state) => state.getChat);
+  const newChat = useProfile((state) => state.newChat);
 
   // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
@@ -35,7 +33,7 @@ const Chat: React.FC = () => {
           setIsInitialized(true);
         } catch (err) {
           console.error("Failed to load chat:", err);
-          setIsInitialized(true); // Still mark as initialized even if it fails
+          setIsInitialized(true); // Still mark as initialized even if it fails -> to prevent loop
         }
       };
 
@@ -71,6 +69,36 @@ const Chat: React.FC = () => {
     });
   }, []);
 
+  // If user is not logged in, show a simplified interface with login prompt
+  if (!username) {
+    return (
+      <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
+        <div className="mb-4 w-full border-b border-gray-200 pb-3 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+            Soul Ai
+          </h2>
+        </div>
+
+        <div className="flex h-[500px] w-full flex-col items-center justify-center rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
+          <div className="text-center">
+            <h3 className="mb-2 text-lg font-medium text-gray-700 dark:text-gray-300">
+              Please log in to start chatting
+            </h3>
+            <p className="mb-4 text-gray-600 dark:text-gray-400">
+              You need to be logged in to use the chat assistant
+            </p>
+            <a
+              href="/login"
+              className="rounded-full bg-blue-500 px-6 py-2 text-white transition-colors hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+            >
+              Log in
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
       {/* Header */}
@@ -82,7 +110,7 @@ const Chat: React.FC = () => {
 
       {/* Messages Container */}
       <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
-        {showMoodTracker && username && <MoodTracker />}
+        {showMoodTracker && <MoodTracker />}
 
         <div className="flex flex-col space-y-4">
           {chat && chat.length > 0 ? (
@@ -129,15 +157,7 @@ const Chat: React.FC = () => {
             ))
           ) : !showMoodTracker ? (
             <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
-              <p>
-                {username
-                  ? "Start a conversation..."
-                  : "Please log in to start chatting"}
-              </p>
-            </div>
-          ) : !username ? (
-            <div className="flex h-64 items-center justify-center text-gray-500 dark:text-gray-400">
-              <p>Please log in to start chatting</p>
+              <p>Start a conversation...</p>
             </div>
           ) : null}
 
@@ -170,7 +190,6 @@ const Chat: React.FC = () => {
         <button
           type="button"
           className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-          disabled={!username}
         >
           <PaperclipIcon size={20} />
         </button>
@@ -179,35 +198,29 @@ const Chat: React.FC = () => {
         <div className="flex flex-grow items-center rounded-full border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
           <ImageIcon
             size={20}
-            className={`mr-2 ${
-              username ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-            } text-gray-500 dark:text-gray-400`}
+            className="mr-2 cursor-pointer text-gray-500 dark:text-gray-400"
           />
 
           <input
             className="flex-grow rounded-full bg-transparent p-2 text-gray-700 outline-none dark:text-gray-100"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              username ? "Type a message..." : "Please log in to chat"
-            }
-            disabled={isLoading || !username}
+            placeholder="Type a message..."
+            disabled={isLoading}
           />
 
           <SmileIcon
             size={20}
-            className={`ml-2 ${
-              username ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-            } text-gray-500 dark:text-gray-400`}
+            className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400"
           />
         </div>
 
         {/* Send Button */}
         <button
           type="submit"
-          disabled={!input.trim() || isLoading || !username}
+          disabled={!input.trim() || isLoading}
           className={`rounded-full p-3 text-white shadow-md transition-all ${
-            input.trim() && !isLoading && username
+            input.trim() && !isLoading
               ? "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               : "cursor-not-allowed bg-blue-300 opacity-70 dark:bg-blue-700"
           }`}
