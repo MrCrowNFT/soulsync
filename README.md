@@ -4,7 +4,7 @@ Node js + express backend, react with ts frontend, this is because some ai tools
 
 ## TODO
 
-- debuging -> fix chat infinite loop when trying to load chat -> maybe just load a diferent component if user not logged in
+- debuging -> 
 - styling -> implement the style guide
 - Testing -> jest testing
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MoodGraph from "@/components/mood-graph";
 import UserCard from "@/components/user-card";
@@ -8,16 +8,18 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const username = useProfile(state => state.username);
   const isLoading = useProfile(state => state.isLoading);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Redirect to login if user is not authenticated
+  // Check authentication status once component mounts
   useEffect(() => {
-    if (!username && !isLoading) {
-      navigate("/login");
+    // Only set authChecked to true after we've confirmed the auth state
+    if (!isLoading) {
+      setAuthChecked(true);
     }
-  }, [username, isLoading, navigate]);
+  }, [isLoading]);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (isLoading || !authChecked) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -28,7 +30,7 @@ const Dashboard = () => {
     );
   }
 
-  // Show login required message if no user (this will briefly show before redirect)
+  // Show login required message if no user
   if (!username) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
