@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useProfile } from "@/hooks/use-profile";
+import { User, Lock, AlertCircle } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -24,9 +31,9 @@ export function LoginForm({
     setLocalError(null);
 
     try {
-      // Call the login method from Zustand 
+      // Call the login method from Zustand
       await login({
-        username: username, 
+        username: username,
         password: password,
       });
 
@@ -43,57 +50,101 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+    <div
+      className={cn("flex flex-col gap-6 max-w-md mx-auto", className)}
+      {...props}
+    >
+      <Card className="border-border shadow-lg">
+        <CardHeader className="space-y-2 pb-4">
+          <CardTitle className="text-3xl font-bold text-primary">
+            Welcome Back!!
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Log in to continue your journey
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-6">
-              {(error || localError) && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    {error || localError || "Login failed. Please try again."}
-                  </AlertDescription>
-                </Alert>
-              )}
-              <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {(error || localError) && (
+              <Alert
+                variant="destructive"
+                className="bg-destructive/10 border-destructive text-destructive"
+              >
+                <AlertCircle className="h-5 w-5" />
+                <AlertTitle className="font-semibold">Login Error</AlertTitle>
+                <AlertDescription>
+                  {error || localError || "Login failed. Please try again."}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Username Field */}
+            <div className="grid gap-2">
+              <Label htmlFor="username" className="text-sm font-medium">
+                Username
+              </Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                  <User size={18} />
+                </div>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="username"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="pl-10 bg-background focus:border-primary focus:ring-primary"
                 />
               </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
+            </div>
+
+            {/* Password Field */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
+                <a
+                  href="#"
+                  className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                >
+                  Forgot password?
+                </a>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                  <Lock size={18} />
                 </div>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="pl-10 bg-background focus:border-primary focus:ring-primary"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
             </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 transition-all duration-300 ease-in-out transform hover:scale-[1.02]"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="/signup/" className="underline underline-offset-4">
+              <span className="text-muted-foreground">
+                Don't have an account?
+              </span>{" "}
+              <a
+                href="/signup/"
+                className="text-primary font-medium hover:text-primary/80 underline underline-offset-4 transition-colors"
+              >
                 Sign up
               </a>
             </div>
