@@ -40,7 +40,7 @@ export function LoginForm({
       // Redirect on successful login
       window.location.href = "/";
     } catch (error) {
-      // Handle any errors not caught by the store
+      // Handle any errors not caught by zustand
       setLocalError(
         error instanceof Error
           ? error.message
