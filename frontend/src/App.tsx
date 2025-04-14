@@ -11,14 +11,14 @@ import { SignupForm } from "./components/signup";
 function App() {
   return (
     <>
-      <Navbar />
+      <Navbar /><br/>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/signup" element={<SignupForm />} />
-      </Routes>
+      </Routes><br/>
       <Footer />
     </>
   );
