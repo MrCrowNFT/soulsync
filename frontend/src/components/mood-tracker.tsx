@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { moods } from "@/data/moods";
 
@@ -8,12 +8,13 @@ const MoodTracker: React.FC = () => {
   const [localLoading, setLocalLoading] = useState<boolean>(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Only get the newMood method and check if user is authenticated
-  const { newMood, isAuthenticated } = useProfile((state) => ({
-    newMood: state.newMood,
-    // Check if user is authenticated by checking if username exists
-    isAuthenticated: !!state.username && !!state._id,
-  }));
+  // FIX: Use primitive selectors instead of object destructuring to prevent unnecessary re-renders
+  const newMood = useProfile((state) => state.newMood);
+  const username = useProfile((state) => state.username);
+  const userId = useProfile((state) => state._id);
+  
+  // Derive isAuthenticated from the selected values
+  const isAuthenticated = !!username && !!userId;
 
   const handleChange = (moodValue: number): void => {
     setSelectedMood(moodValue);
@@ -130,4 +131,5 @@ const MoodTracker: React.FC = () => {
   );
 };
 
-export default MoodTracker;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(MoodTracker);
