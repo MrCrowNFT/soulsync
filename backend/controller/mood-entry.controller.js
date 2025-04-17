@@ -4,6 +4,7 @@ import { getMoodAverages } from "../helpers/mood-entry.helper.js";
 
 export const newMoodEntry = async (req, res) => {
   try {
+    console.log(`Creating new mood entry...`)
     const userId = req.user._id;
     const mood = req.body;
 
@@ -37,6 +38,7 @@ export const newMoodEntry = async (req, res) => {
     });
 
     await newMoodEntry.save();
+    console.log(`New mood entry created succesfully`)
     return res.status(201).json({ success: true, data: newMoodEntry });
   } catch (error) {
     console.error("Error in newEntry:", error);
@@ -51,6 +53,7 @@ export const newMoodEntry = async (req, res) => {
 export const getEntries = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log(`Getting mood entries for user: ${userId}`)
     const type = req.params;
 
     if (!userId || !type) {
@@ -63,7 +66,10 @@ export const getEntries = async (req, res) => {
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
+    console.log(`Calculating mood averages`)
     const averages = await getMoodAverages(userId, type);
+
+    console.log(`Mood entries averages calculated successfully.\nMood entries retrieval complete `)
     return res.status(200).json({ success: true, data: averages });
   } catch (error) {
     console.error("Error in getEntries:", error);
@@ -75,6 +81,7 @@ export const getEntries = async (req, res) => {
   }
 };
 
+//todo user can not yet delete mood entries
 export const deleteMoodEntries = async (req, res) => {
   try {
     const userId = req.user._id;

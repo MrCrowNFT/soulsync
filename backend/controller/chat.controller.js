@@ -15,7 +15,7 @@ export const getChatEntries = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    console.log(`Getting chat entries for user: ${userId}...`)
+    console.log(`Getting chat entries for user: ${userId}...`);
     if (!userId) {
       return res.status(400).json({ success: false, error: "userId required" });
     }
@@ -35,7 +35,7 @@ export const getChatEntries = async (req, res) => {
         message: "No chat entries found",
       });
     }
-    console.log(`Chat entries retrieved succesfully for user: ${userId}...`)
+    console.log(`Chat entries retrieved succesfully for user: ${userId}...`);
 
     return res.status(200).json({
       success: true,
@@ -54,7 +54,7 @@ export const getChatEntries = async (req, res) => {
 export const newChatEntry = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log(`Creating new chat entry for user: ${userId}...`)
+    console.log(`Creating new chat entry for user: ${userId}...`);
 
     const { message, sender, metadata } = req.body;
 
@@ -76,16 +76,18 @@ export const newChatEntry = async (req, res) => {
       metadata: metadata || {},
     });
     await newChatEntry.save();
-    console.log(`New chat entry saved succesfully`)
+    console.log(`New chat entry saved succesfully`);
 
-    console.log(`New chat entry saved succesfully`)
+    console.log(`Analyzing new chat entry for memory worthiness...`);
     //check if message is new memory worthy and save it
     const newMemory = await analyzeAndExtractMemory(userId, message);
     if (newMemory) await newMemory.save();
 
+    console.log(`Fetching relevant memories...`);
     // get filtered relevant user memories from DB
     const relatedMemories = await fetchRelevantMemories(userId, message);
 
+    console.log(`Sending message to LLM`);
     //todo need to add and send info about the user
     const aiMessage = await getLLMResponse(message, relatedMemories);
 
@@ -93,8 +95,11 @@ export const newChatEntry = async (req, res) => {
     const aiChat = new ChatEntry({ userId, message: aiMessage, sender: "ai" });
     await aiChat.save();
 
+    console.log(
+      `Ai chat entry created succesfully.\nSending response to user...`
+    );
     //todo maybe also return the newChatEntry and the memory if any
-    res.status(201).json({ success: true, data: aiChat });
+    return res.status(201).json({ success: true, data: aiChat });
   } catch (error) {
     console.error("Error saving chat entry:", error);
     res.status(500).json({
@@ -108,6 +113,7 @@ export const newChatEntry = async (req, res) => {
 export const deleteChatEntries = async (req, res) => {
   try {
     const { userId } = req.user._id;
+    console.log(`Deleting chat of user: ${userId}`);
     if (!userId) {
       return res
         .status(400)
@@ -121,6 +127,7 @@ export const deleteChatEntries = async (req, res) => {
     }
 
     await ChatEntry.deleteMany({ userId: userId });
+    console.log(`Chat deleted succesfully`);
 
     return res
       .status(200)
