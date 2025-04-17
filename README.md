@@ -2,11 +2,19 @@
 
 Node js + express backend, react with ts frontend, this is because some ai tools are not yet well adapted to ts
 
-## TODO
+## TODO MVP
 
 - debuging -> 
 - styling -> implement the style guide
 - Testing -> jest testing
+
+## Future update
+Eventually
+
+- Add file upload handling on your backend 
+- Store uploaded images in cloud storage 
+- Store only the image URL/path in database
+
 
 ## style guide
 

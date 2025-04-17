@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
@@ -12,7 +13,13 @@ const app = express();
 dotenv.config();
 
 app.use(express.json());
-app.use(cors()); //allow all origins for now
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173", //only accept from here where frontend is running
+    credentials: true, //need this for the cookies to work cross origin
+  })
+);
 
 app.use("/auth", authRouter);
 app.use("/mood", authenticate, moodEntryRouter);

@@ -12,7 +12,9 @@ import {
 export const signupRequest = async (
   signup: SignupParams
 ): Promise<SignupResponse> => {
+  console.log("Sending signup request...")
   const res = await api.post("/auth/signup", signup);
+  console.log("New account created succesfully")
   return res.data;
 };
 

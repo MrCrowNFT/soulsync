@@ -14,6 +14,8 @@ import {
 export const getChatEntries = async (req, res) => {
   try {
     const userId = req.user._id;
+
+    console.log(`Getting chat entries for user: ${userId}...`)
     if (!userId) {
       return res.status(400).json({ success: false, error: "userId required" });
     }
@@ -33,6 +35,7 @@ export const getChatEntries = async (req, res) => {
         message: "No chat entries found",
       });
     }
+    console.log(`Chat entries retrieved succesfully for user: ${userId}...`)
 
     return res.status(200).json({
       success: true,
@@ -51,6 +54,8 @@ export const getChatEntries = async (req, res) => {
 export const newChatEntry = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log(`Creating new chat entry for user: ${userId}...`)
+
     const { message, sender, metadata } = req.body;
 
     //more compact validation
@@ -71,7 +76,9 @@ export const newChatEntry = async (req, res) => {
       metadata: metadata || {},
     });
     await newChatEntry.save();
+    console.log(`New chat entry saved succesfully`)
 
+    console.log(`New chat entry saved succesfully`)
     //check if message is new memory worthy and save it
     const newMemory = await analyzeAndExtractMemory(userId, message);
     if (newMemory) await newMemory.save();

@@ -1,4 +1,4 @@
-import {User} from "../models/user.model.js";
+import { User } from "../models/user.model.js";
 import RefreshToken from "../models/refresh-token.model.js";
 import {
   generateTokens,
@@ -10,12 +10,15 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    console.log(`Logging in user:${username}...`);
+
     //todo eventually need to add popultate("memory"), when memory showing and deleting is added
     const user = await User.findOne({ username }).select("+password"); //explicitly select password for comparison
     if (!user) {
       res.status(401).json({ success: false, message: "Invalid username" });
       return;
     }
+    console.log("User found on database");
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
@@ -24,6 +27,7 @@ export const login = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
+    console.log("Tokenes generated");
 
     //store the refresh token on db
     const createdToken = await RefreshToken.create({
@@ -32,11 +36,10 @@ export const login = async (req, res) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), //* 7 days -> If changing the REFRESH_TOKEN_EXPIRY don't forget to also change this
     });
     if (!createdToken) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Failed to save refresh token on database",
       });
-      return;
     }
 
     res.cookie("refreshToken", refreshToken, {
@@ -50,7 +53,9 @@ export const login = async (req, res) => {
     const userData = user.toObject();
     delete userData.password;
 
-    res.status(200).json({
+    console.log(`${username} logged in succesfully`);
+
+    return res.status(200).json({
       success: true,
       message: "Login successful",
       accessToken,
@@ -64,6 +69,7 @@ export const login = async (req, res) => {
 
 export const refreshAccessToken = async (req, res) => {
   try {
+    console.log("refresshing access token");
     //check refresh token from the cookie
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -112,8 +118,9 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     const accessToken = generateAccessToken(user);
+    console.log(`Access token refreshed succesfully for user: ${user._id}`)
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Refresh successful",
       accessToken,
@@ -160,6 +167,7 @@ export const logout = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
+    console.log("Creating new account...");
     const {
       username,
       password,
@@ -205,6 +213,7 @@ export const signup = async (req, res) => {
       });
     }
 
+    let birthDateObj = null;
     // Validate birth date if included
     if (birthDate) {
       const birthDateObj = new Date(birthDate);
@@ -250,9 +259,10 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
+    console.log("Account created succesfully");
 
     // success response without password
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "User created successfully",
     });
