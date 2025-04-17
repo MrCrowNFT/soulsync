@@ -138,7 +138,7 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     console.log(`Looking for user with ID: ${decoded._id}`);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded._id);
     console.log(`User found: ${user ? "Yes" : "No"}`);
 
     if (!user) {

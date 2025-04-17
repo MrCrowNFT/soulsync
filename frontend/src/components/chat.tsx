@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
@@ -16,7 +16,6 @@ const Chat: React.FC = () => {
   const chat = useProfile((state) => state.chat);
   const isLoading = useProfile((state) => state.isLoading);
   const error = useProfile((state) => state.error);
-
 
   const getChat = useProfile((state) => state.getChat);
   const newChat = useProfile((state) => state.newChat);
@@ -99,6 +98,10 @@ const Chat: React.FC = () => {
     );
   }
 
+  // Calculate whether we should show the mood tracker
+  // Only show if it's enabled AND there are no chat messages
+  const shouldShowMoodTracker = showMoodTracker && (!chat || chat.length === 0);
+
   return (
     <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
       {/* Header */}
@@ -110,7 +113,7 @@ const Chat: React.FC = () => {
 
       {/* Messages Container */}
       <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
-        {showMoodTracker && <MoodTracker />}
+        {shouldShowMoodTracker && <MoodTracker />}
 
         <div className="flex flex-col space-y-4">
           {chat && chat.length > 0 ? (
@@ -232,4 +235,4 @@ const Chat: React.FC = () => {
   );
 };
 
-export default Chat;
+export default memo(Chat);
