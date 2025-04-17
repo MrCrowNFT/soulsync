@@ -95,7 +95,7 @@ export const getEntries = async (req, res) => {
     const userId = req.user._id;
     console.log(`User ID from request: ${userId}`);
 
-    const type = req.params;
+    const type = req.params.type; //to get the string so that the getMoodAverages functions recieve it
     console.log(`Entry type requested: ${JSON.stringify(type)}`);
 
     // Check if required parameters exist
