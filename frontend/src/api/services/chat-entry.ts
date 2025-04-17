@@ -14,7 +14,7 @@ export const newChatEntry = async (
   chatEntry: chatEntry
 ): Promise<newChatEntryResponse> => {
   console.log("Sending new chat entry...")
-  const res = await api.post("/", chatEntry);
+  const res = await api.post("/chat/", chatEntry);
   return res.data;
 };
 

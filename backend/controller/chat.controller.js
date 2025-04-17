@@ -54,7 +54,7 @@ export const getChatEntries = async (req, res) => {
     console.log(`Database query completed in ${queryTime}ms`);
     console.log(`Number of chat entries found: ${chatEntries?.length || 0}`);
 
-    if (!chatEntries ) {
+    if (!chatEntries) {
       console.log(`No chat entries found for user: ${userId}`);
       return res.status(404).json({
         success: false,
@@ -94,15 +94,30 @@ export const getChatEntries = async (req, res) => {
     });
   }
 };
-
 export const newChatEntry = async (req, res) => {
   try {
+    console.log("------ NEW CHAT ENTRY PROCESS STARTED ------");
+    console.log(`Request path: ${req.path}`);
+    console.log(`Request method: ${req.method}`);
+
     const userId = req.user._id;
     console.log(`Creating new chat entry for user: ${userId}...`);
 
     const { message, sender, metadata } = req.body;
+    console.log(`Message length: ${message ? message.length : 0} characters`);
+    console.log(`Sender: ${sender}`);
+    console.log(`Metadata provided: ${metadata ? "Yes" : "No"}`);
 
     //more compact validation
+    console.log("Validating input parameters...");
+    console.log(
+      `User ID valid: ${mongoose.Types.ObjectId.isValid(userId) ? "Yes" : "No"}`
+    );
+    console.log(`Message provided: ${message ? "Yes" : "No"}`);
+    console.log(
+      `Sender valid: ${["user", "ai"].includes(sender) ? "Yes" : "No"}`
+    );
+
     if (
       !userId ||
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -110,6 +125,7 @@ export const newChatEntry = async (req, res) => {
       !sender ||
       !["user", "ai"].includes(sender)
     ) {
+      console.log("ERROR: Invalid input parameters");
       return res.status(400).json({ success: false, error: "Invalid input" });
     }
 
@@ -119,33 +135,55 @@ export const newChatEntry = async (req, res) => {
       sender: sender,
       metadata: metadata || {},
     });
+    console.log(`Chat entry object created, preparing to save to database`);
     await newChatEntry.save();
-    console.log(`New chat entry saved succesfully`);
+    console.log(
+      `New chat entry saved successfully. Entry ID: ${newChatEntry._id}`
+    );
 
     console.log(`Analyzing new chat entry for memory worthiness...`);
     //check if message is new memory worthy and save it
     const newMemory = await analyzeAndExtractMemory(userId, message);
-    if (newMemory) await newMemory.save();
+    console.log(
+      `Memory extraction result: ${
+        newMemory ? "New memory created" : "No memory created"
+      }`
+    );
+    if (newMemory) {
+      await newMemory.save();
+      console.log(`New memory saved successfully. Memory ID: ${newMemory._id}`);
+    }
 
     console.log(`Fetching relevant memories...`);
     // get filtered relevant user memories from DB
     const relatedMemories = await fetchRelevantMemories(userId, message);
+    console.log(`Related memories found: ${relatedMemories.length}`);
 
     console.log(`Sending message to LLM`);
     //todo need to add and send info about the user
     const aiMessage = await getLLMResponse(message, relatedMemories);
+    console.log(
+      `LLM response received. Response length: ${aiMessage.length} characters`
+    );
 
     //create and save ai response
+    console.log(`Creating AI response entry in database`);
     const aiChat = new ChatEntry({ userId, message: aiMessage, sender: "ai" });
     await aiChat.save();
 
     console.log(
-      `Ai chat entry created succesfully.\nSending response to user...`
+      `AI chat entry created successfully. Entry ID: ${aiChat._id}\nSending response to user...`
     );
     //todo maybe also return the newChatEntry and the memory if any
+    console.log("------ NEW CHAT ENTRY PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(201).json({ success: true, data: aiChat });
   } catch (error) {
-    console.error("Error saving chat entry:", error);
+    console.error("------ NEW CHAT ENTRY PROCESS FAILED ------");
+    console.error(`Error type: ${error.name}`);
+    console.error(`Error message: ${error.message}`);
+    console.error(`Error stack: ${error.stack}`);
+    console.error(`Request body: ${JSON.stringify(req.body)}`);
+    console.error(`Request user: ${JSON.stringify(req.user)}`);
     res.status(500).json({
       success: false,
       error: "Internal server error",

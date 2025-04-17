@@ -107,7 +107,7 @@ const Chat: React.FC = () => {
       {/* Header */}
       <div className="mb-4 w-full border-b border-gray-200 pb-3 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          Chat Assistant
+          Soul Assistant
         </h2>
       </div>
 

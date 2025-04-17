@@ -4,7 +4,7 @@ import { getMoodAverages } from "../helpers/mood-entry.helper.js";
 
 export const newMoodEntry = async (req, res) => {
   try {
-    console.log(`=== Starting newMoodEntry function ===`);
+    console.log(`------ NEW MOOD ENTRY PROCESS STARTED ------`);
     console.log(`Request body:`, JSON.stringify(req.body));
     console.log(`Request user:`, JSON.stringify(req.user));
 
@@ -68,10 +68,12 @@ export const newMoodEntry = async (req, res) => {
       `New mood entry saved successfully with id: ${newMoodEntry._id}`
     );
 
+    console.log("------ NEW MOOD ENTRY PROCESS COMPLETED SUCCESSFULLY ------");
+
     // Send response
     return res.status(201).json({ success: true, data: newMoodEntry });
   } catch (error) {
-    console.error(`=== ERROR in newMoodEntry ===`);
+    console.error(`------ NEW MOOD ENTRY PROCESS FAILED ------`);
     console.error(`Error name: ${error.name}`);
     console.error(`Error message: ${error.message}`);
     console.error(`Error stack: ${error.stack}`);
@@ -86,29 +88,55 @@ export const newMoodEntry = async (req, res) => {
 
 export const getEntries = async (req, res) => {
   try {
-    const userId = req.user._id;
-    console.log(`Getting mood entries for user: ${userId}`);
-    const type = req.params;
+    console.log("------ GET ENTRIES PROCESS STARTED ------");
+    console.log(`Request path: ${req.path}`);
+    console.log(`Request method: ${req.method}`);
 
+    const userId = req.user._id;
+    console.log(`User ID from request: ${userId}`);
+
+    const type = req.params;
+    console.log(`Entry type requested: ${JSON.stringify(type)}`);
+
+    // Check if required parameters exist
+    console.log(`Required parameters exist: ${userId && type ? "Yes" : "No"}`);
     if (!userId || !type) {
+      console.log("ERROR: Missing required parameters (userId or type)");
       return res
         .status(400)
         .json({ success: false, error: "userId and type are required" });
     }
+
+    // Validate userId format
+    console.log(`Validating user ID format: ${userId}`);
+    console.log(
+      `User ID is valid ObjectId: ${
+        mongoose.Types.ObjectId.isValid(userId) ? "Yes" : "No"
+      }`
+    );
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log("ERROR: Invalid user ID format");
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
-    console.log(`Calculating mood averages`);
-    const averages = await getMoodAverages(userId, type);
 
+    console.log(`Calculating mood averages for user: ${userId}`);
+    console.log(`With parameters: ${JSON.stringify(type)}`);
+    const averages = await getMoodAverages(userId, type);
     console.log(
-      `Mood entries averages calculated successfully.\nMood entries retrieval complete `
+      `Mood averages calculation result: ${averages ? "Successful" : "Failed"}`
     );
+
+    console.log("------ GET ENTRIES PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(200).json({ success: true, data: averages });
   } catch (error) {
-    console.error("Error in getEntries:", error);
+    console.error("------ GET ENTRIES PROCESS FAILED ------");
+    console.error(`Error type: ${error.name}`);
+    console.error(`Error message: ${error.message}`);
+    console.error(`Error stack: ${error.stack}`);
+    console.error(`Request user: ${JSON.stringify(req.user)}`);
+    console.error(`Request params: ${JSON.stringify(req.params)}`);
     return res.status(500).json({
       success: false,
       error: "Internal server error",

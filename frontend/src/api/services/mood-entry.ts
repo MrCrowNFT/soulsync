@@ -8,15 +8,15 @@ import api from "../axios";
 export const newMoodEntryRequest = async (
   mood: number
 ): Promise<newMoodEntryResponse> => {
-  console.log("Sending new mood entry...")
-  const res = await api.post("/mood/", mood);
+  console.log("Sending new mood entry...");
+  const res = await api.post("/mood/", { mood: mood });
   return res.data;
 };
 
 export const getMoodData = async (
   type: "weekly" | "monthly" | "yearly"
 ): Promise<getMoodEntriesResponse> => {
-  console.log(`Getting mood ${type} averages...`)
+  console.log(`Getting mood ${type} averages...`);
   const res = await api.get(`/mood/${type}`);
   return res.data;
 };
