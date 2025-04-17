@@ -1,9 +1,12 @@
 import ChatEntry from "../models/chat-entry.model.js";
+import mongoose from "mongoose";
 import { getLLMResponse } from "../utils/ai.util.js";
 import {
   analyzeAndExtractMemory,
   fetchRelevantMemories,
 } from "../utils/memory.util.js";
+
+const CHAT_ENTRY_LIMIT = 100;
 
 //**We don't need a chat entry update method
 /**
@@ -13,37 +16,78 @@ import {
  */
 export const getChatEntries = async (req, res) => {
   try {
-    const userId = req.user._id;
+    console.log("------ GET CHAT ENTRIES PROCESS STARTED ------");
+    console.log(`Request path: ${req.path}`);
+    console.log(`Request method: ${req.method}`);
 
-    console.log(`Getting chat entries for user: ${userId}...`);
+    const userId = req.user?._id;
+    const limit = CHAT_ENTRY_LIMIT;
+
+    console.log(`Attempting to get chat entries for user: ${userId}`);
+    console.log(`Using entry limit: ${limit}`);
+
     if (!userId) {
+      console.log("ERROR: userId not found in request");
       return res.status(400).json({ success: false, error: "userId required" });
     }
+    console.log("User ID present in request");
+
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log(`ERROR: Invalid user ID format: ${userId}`);
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
+    console.log(`User ID format validated: ${userId}`);
 
+    console.log(`Querying database for chat entries with userId: ${userId}`);
+    console.log(
+      `Query parameters: { sort: { createdAt: -1 }, limit: ${limit} }`
+    );
+
+    const startTime = Date.now();
     const chatEntries = await ChatEntry.find({ userId: userId })
-      .sort({ createdAt: -1 }) //get most recent
-      .limit(limit); //default to 100 entries
+      .sort({ createdAt: -1 }) // get most recent
+      .limit(limit); // default to 100 entries
+    const queryTime = Date.now() - startTime;
 
-    if (!chatEntries || chatEntries.length === 0) {
+    console.log(`Database query completed in ${queryTime}ms`);
+    console.log(`Number of chat entries found: ${chatEntries?.length || 0}`);
+
+    if (!chatEntries ) {
+      console.log(`No chat entries found for user: ${userId}`);
       return res.status(404).json({
         success: false,
         message: "No chat entries found",
       });
     }
-    console.log(`Chat entries retrieved succesfully for user: ${userId}...`);
+
+    const oldestEntry =
+      chatEntries.length > 0
+        ? new Date(chatEntries[chatEntries.length - 1].createdAt)
+        : "none";
+    const newestEntry =
+      chatEntries.length > 0 ? new Date(chatEntries[0].createdAt) : "none";
+
+    console.log(`Chat entries retrieved successfully for user: ${userId}`);
+    console.log(`Date range: ${oldestEntry} to ${newestEntry}`);
+    console.log(`Returning ${chatEntries.length} entries to client`);
+    console.log(
+      "------ GET CHAT ENTRIES PROCESS COMPLETED SUCCESSFULLY ------"
+    );
 
     return res.status(200).json({
       success: true,
       data: chatEntries,
     });
   } catch (error) {
-    console.error("Error retrieving chat entries:", error);
-    res.status(500).json({
+    console.error("------ GET CHAT ENTRIES PROCESS FAILED ------");
+    console.error(`Error type: ${error.name}`);
+    console.error(`Error message: ${error.message}`);
+    console.error(`Error stack: ${error.stack}`);
+    console.error(`User ID from request: ${req.user?._id || "undefined"}`);
+
+    return res.status(500).json({
       success: false,
       error: "Internal server error",
       details: error.message,

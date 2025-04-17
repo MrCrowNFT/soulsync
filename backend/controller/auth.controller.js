@@ -69,64 +69,106 @@ export const login = async (req, res) => {
 
 export const refreshAccessToken = async (req, res) => {
   try {
-    console.log("refresshing access token");
+    console.log("------ REFRESH TOKEN PROCESS STARTED ------");
+    console.log(`Request path: ${req.path}`);
+    console.log(`Request method: ${req.method}`);
     //check refresh token from the cookie
     const refreshToken = req.cookies.refreshToken;
+    console.log(
+      `Refresh token found in cookies: ${refreshToken ? "Yes" : "No"}`
+    );
+
     if (!refreshToken) {
-      res
+      console.log("ERROR: No refresh token provided in cookies");
+      return res
         .status(400)
         .json({ success: false, message: "Refresh token is required" });
-      return;
     }
 
     //check if refresh token exist on db
+    console.log(
+      `Looking for refresh token in database: ${refreshToken.substring(
+        0,
+        10
+      )}...`
+    );
     const storedToken = await RefreshToken.findOne({ token: refreshToken });
+    console.log(`Token found in database: ${storedToken ? "Yes" : "No"}`);
+
     if (!storedToken) {
-      res
+      console.log("ERROR: Token not found in database");
+      return res
         .status(401)
         .json({ success: false, message: "Invalid refresh token" });
-      return;
     }
 
     //check if refresh token isn't expired
-    if (storedToken.expiresAt < new Date()) {
+    const currentTime = new Date();
+    console.log(`Token expiry time: ${storedToken.expiresAt}`);
+    console.log(`Current time: ${currentTime}`);
+    console.log(
+      `Token expired: ${storedToken.expiresAt < currentTime ? "Yes" : "No"}`
+    );
+    if (storedToken.expiresAt < currentTime) {
+      console.log("ERROR: Token expired, deleting from database");
       await RefreshToken.deleteOne({ _id: storedToken._id });
-      res
+      return res
         .status(401)
         .json({ success: false, message: "Refresh token expired" });
-      return;
     }
 
     // Verify the refresh token
+    console.log("Verifying JWT token signature...");
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      console.log(
+        `JWT verification successful. Decoded user ID: ${decoded._id}`
+      );
     } catch (error) {
       //If verification fails, delete the stored refresh token from the database
       //as a security measure -> if someone tries to use an invalid token (possibly tampered with), we remove it from the system entirely
+      console.log(`ERROR: JWT verification failed: ${error.message}`);
+      console.log(`Error name: ${error.name}`);
+      console.log(`Error stack: ${error.stack}`);
       await RefreshToken.deleteOne({ _id: storedToken._id });
-      res
+      return res
         .status(401)
         .json({ success: false, message: "Invalid refresh token" });
-      return;
     }
 
+    console.log(`Looking for user with ID: ${decoded._id}`);
     const user = await User.findById(decoded.id);
+    console.log(`User found: ${user ? "Yes" : "No"}`);
+
     if (!user) {
-      res.status(401).json({ success: false, message: "User not found" });
-      return;
+      console.log("ERROR: User not found in database");
+      return res
+        .status(401)
+        .json({ success: false, message: "User not found" });
     }
 
+    console.log(`Generating new access token for user: ${user._id}`);
     const accessToken = generateAccessToken(user);
-    console.log(`Access token refreshed succesfully for user: ${user._id}`)
+    console.log(
+      `Access token generated successfully. Token prefix: ${accessToken.substring(
+        0,
+        10
+      )}...`
+    );
 
+    console.log("------ REFRESH TOKEN PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(200).json({
       success: true,
       message: "Refresh successful",
       accessToken,
     });
   } catch (error) {
-    console.error(`Error refreshing token: ${error.message}`);
+    console.error("------ REFRESH TOKEN PROCESS FAILED ------");
+    console.error(`Error type: ${error.name}`);
+    console.error(`Error message: ${error.message}`);
+    console.error(`Error stack: ${error.stack}`);
+    console.error(`Request cookies: ${JSON.stringify(req.cookies)}`);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
