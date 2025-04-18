@@ -10,7 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { useProfile } from "@/hooks/use-profile"; 
+import { useProfile } from "@/hooks/use-profile";
 
 // Register Chart.js components
 Chart.register(
@@ -54,7 +54,7 @@ const MoodGraph = () => {
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Get data and functions from Zustand 
+  // Get data and functions from Zustand
   const { moodData, getMoods, isLoading, error } = useProfile();
 
   // Function to detect dark mode
@@ -82,10 +82,24 @@ const MoodGraph = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Fetch data on component mount and when time period changes
+  // Fetch data ONLY on component mount and when time period changes
   useEffect(() => {
-    getMoods(timePeriod);
-  }, [timePeriod, getMoods]);
+    // Create a flag to prevent duplicate fetches
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (isMounted) {
+        await getMoods(timePeriod);
+      }
+    };
+
+    fetchData();
+
+    // Cleanup function to set flag to false when component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [timePeriod]); // Removed getMoods from dependency array
 
   // Handle time period change
   const handleTimePeriodChange = (
@@ -162,10 +176,10 @@ const MoodGraph = () => {
     labels: moodData.labels,
     datasets: moodData.datasets.map((dataset) => ({
       ...dataset,
-      borderColor: isDarkMode ? "#3b82f6" : "#2563eb", 
+      borderColor: isDarkMode ? "#3b82f6" : "#2563eb",
       backgroundColor: isDarkMode
         ? "rgba(59, 130, 246, 0.2)"
-        : "rgba(37, 99, 235, 0.2)", 
+        : "rgba(37, 99, 235, 0.2)",
     })),
   };
 
