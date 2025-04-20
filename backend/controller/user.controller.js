@@ -34,6 +34,7 @@ export const getUser = async (req, res) => {
  */
 export const updateUser = async (req, res) => {
   try {
+    console.log("------ UPDATE USER PROCESS STARTED ------");
     const userId = req.user._id;
     const {
       username,
@@ -84,12 +85,15 @@ export const updateUser = async (req, res) => {
       updatedAt: updatedUser.updatedAt,
     };
 
+    console.log("------ UPDATE USER PROCESS COMPLETED SUCCESSFULLY ------");
+
     return res.status(200).json({
       success: true,
       message: "User profile updated successfully",
       user: userResponse,
     });
   } catch (error) {
+    console.error("------ UPDATE USER PROCESS FAILED ------");
     console.error("Error updating user:", error);
 
     // Handle duplicate key errors (username or email already exists)

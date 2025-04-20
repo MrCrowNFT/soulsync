@@ -30,6 +30,7 @@ const Chat: React.FC = () => {
         try {
           await getChat();
           setIsInitialized(true);
+          // We don't change showMoodTracker here - it should stay visible until user interaction
         } catch (err) {
           console.error("Failed to load chat:", err);
           setIsInitialized(true); // Still mark as initialized even if it fails -> to prevent loop
@@ -50,7 +51,7 @@ const Chat: React.FC = () => {
         try {
           await newChat(input.trim());
           setInput("");
-          setShowMoodTracker(false);
+          setShowMoodTracker(false); // Hide mood tracker when user sends a message
         } catch (err) {
           console.error("Failed to send message:", err);
         }
@@ -58,6 +59,11 @@ const Chat: React.FC = () => {
     },
     [input, username, newChat]
   );
+
+  // Handler for when mood is submitted from MoodTracker
+  const handleMoodSubmitted = useCallback(() => {
+    setShowMoodTracker(false);
+  }, []);
 
   const formatTime = useCallback((date: Date): string => {
     if (!date) return "";
@@ -98,9 +104,8 @@ const Chat: React.FC = () => {
     );
   }
 
-  // Calculate whether we should show the mood tracker
-  // Only show if it's enabled AND there are no chat messages
-  const shouldShowMoodTracker = showMoodTracker && (!chat || chat.length === 0);
+  // Show mood tracker based only on the showMoodTracker state, not depending on chat length
+  const shouldShowMoodTracker = showMoodTracker;
 
   return (
     <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
@@ -113,7 +118,9 @@ const Chat: React.FC = () => {
 
       {/* Messages Container */}
       <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
-        {shouldShowMoodTracker && <MoodTracker />}
+        {shouldShowMoodTracker && (
+          <MoodTracker onMoodSubmit={handleMoodSubmitted} />
+        )}
 
         <div className="flex flex-col space-y-4">
           {chat && chat.length > 0 ? (

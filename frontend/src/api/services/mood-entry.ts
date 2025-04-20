@@ -13,6 +13,7 @@ export const newMoodEntryRequest = async (
   return res.data;
 };
 
+//* Currently not using this
 export const getMoodData = async (
   type: "weekly" | "monthly" | "yearly"
 ): Promise<getMoodEntriesResponse> => {
