@@ -38,10 +38,11 @@ export const getWeeklyAverages = async (userId) => {
 };
 
 export const getMonthlyAverages = async (userId) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
   const monthlyAverages = await MoodEntry.aggregate([
     {
       $match: {
-        userId: userId,
+        userId: userObjectId,
         createdAt: {
           $gte: new Date(new Date().setMonth(new Date().getMonth() - 1)), //again confusing, but should give 30 days
         },
@@ -68,10 +69,13 @@ export const getMonthlyAverages = async (userId) => {
 };
 
 export const getYearlyAverages = async (userId) => {
+  
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   const yearlyAverages = await MoodEntry.aggregate([
     {
       $match: {
-        userId: userId,
+        userId: userObjectId,
         createdAt: {
           $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
         }, // last 12 months
