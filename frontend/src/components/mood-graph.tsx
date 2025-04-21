@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartOptions,
 } from "chart.js";
 import api from "@/api/axios";
 
@@ -22,6 +23,29 @@ Chart.register(
   Tooltip,
   Legend
 );
+
+// Define types
+type TimePeriod = "weekly" | "monthly" | "yearly";
+
+interface Dataset {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string;
+}
+
+interface ChartData {
+  labels: string[];
+  datasets: Dataset[];
+}
+
+interface MoodAPIResponse {
+  success: boolean;
+  data: {
+    labels: string[];
+    datasets: Dataset[];
+  };
+}
 
 // Button component for time period selection
 const TimeButton = ({
@@ -46,11 +70,12 @@ const TimeButton = ({
 );
 
 const MoodGraph = () => {
-  const [timePeriod, setTimePeriod] = useState<"weekly" | "monthly" | "yearly">(
-    "weekly"
-  );
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("weekly");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [moodData, setMoodData] = useState<any>({ labels: [], datasets: [] });
+  const [moodData, setMoodData] = useState<ChartData>({
+    labels: [],
+    datasets: [],
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,9 +104,9 @@ const MoodGraph = () => {
     return () => observer.disconnect();
   }, [detectDarkMode]);
 
-  // Add this callback function
+  // Handle time period change
   const handleTimePeriodChange = useCallback(
-    (newPeriod: "weekly" | "monthly" | "yearly") => {
+    (newPeriod: TimePeriod) => {
       if (newPeriod !== timePeriod) {
         setTimePeriod(newPeriod);
       }
@@ -90,51 +115,48 @@ const MoodGraph = () => {
   );
 
   // Direct API call function
-  const fetchMoodData = useCallback(
-    async (period: "weekly" | "monthly" | "yearly") => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        console.log(`Directly fetching mood data for ${period}...`);
+  const fetchMoodData = useCallback(async (period: TimePeriod) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log(`Directly fetching mood data for ${period}...`);
 
-        // Make sure we're using the correct API endpoint
-        const response = await api.get(`/mood/${period}`);
+      // Make sure we're using the correct API endpoint
+      const response = await api.get<MoodAPIResponse>(`/mood/${period}`);
+      console.log("API response:", response);
 
-        console.log("API response:", response);
+      // Extract the data from the nested structure
+      // The data is in response.data.data, not directly in response.data
+      const responseData = response.data.data;
 
-        // Get the data from the response
-        const data = response.data;
+      // Format the data properly
+      const formattedData: ChartData = {
+        labels: responseData.labels || [],
+        datasets: responseData.datasets || [],
+      };
 
-        // Format the data properly
-        const formattedData = {
-          labels: data?.labels || [],
-          datasets: data?.datasets || [],
-        };
+      console.log("Formatted data:", formattedData);
 
-        console.log("Formatted data:", formattedData);
+      // Check if there's actual data in the datasets
+      const hasData = formattedData.datasets.some(
+        (dataset) => dataset.data && dataset.data.length > 0
+      );
 
-        // Check if there's actual data in the datasets
-        const hasData = formattedData.datasets.some(
-          (dataset) => dataset.data && dataset.data.length > 0
-        );
+      console.log("Has data:", hasData);
 
-        console.log("Has data:", hasData);
-
-        // If there's no data, we'll still set the moodData but log it
-        if (!hasData) {
-          console.log("No data points found in the datasets");
-        }
-
-        setMoodData(formattedData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching mood data:", err);
-        setError("Failed to load mood data");
-        setIsLoading(false);
+      // If there's no data, we'll still set the moodData but log it
+      if (!hasData) {
+        console.log("No data points found in the datasets");
       }
-    },
-    []
-  );
+
+      setMoodData(formattedData);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching mood data:", err);
+      setError("Failed to load mood data");
+      setIsLoading(false);
+    }
+  }, []);
 
   // Fetch data when component mounts or time period changes
   useEffect(() => {
@@ -142,7 +164,7 @@ const MoodGraph = () => {
   }, [timePeriod, fetchMoodData]);
 
   // Chart options with dark/light mode support
-  const chartOptions = {
+  const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -188,10 +210,10 @@ const MoodGraph = () => {
   };
 
   // Prepare chart data with dark/light mode styling
-  const prepareChartData = (data: any) => {
+  const prepareChartData = (data: ChartData): ChartData => {
     return {
-      labels: data?.labels || [],
-      datasets: (data?.datasets || []).map((dataset: any) => ({
+      labels: data.labels || [],
+      datasets: (data.datasets || []).map((dataset) => ({
         ...dataset,
         borderColor: isDarkMode ? "#3b82f6" : "#2563eb",
         backgroundColor: isDarkMode
@@ -202,11 +224,9 @@ const MoodGraph = () => {
   };
 
   // Function to check if there's actual data in the datasets
-  const hasActualData = useCallback((data: any) => {
-    return (
-      data?.datasets?.some(
-        (dataset: any) => dataset.data && dataset.data.length > 0
-      ) || false
+  const hasActualData = useCallback((data: ChartData): boolean => {
+    return data.datasets.some(
+      (dataset) => dataset.data && dataset.data.length > 0
     );
   }, []);
 

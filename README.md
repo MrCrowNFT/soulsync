@@ -4,21 +4,18 @@ Node js + express backend, react with ts frontend, this is because some ai tools
 
 ## TODO MVP
 
-- debuging -> 
-- styling -> implement the style guide
+- debuging -> AI Chat
 - Testing -> jest testing
 
 ## Future update
-Eventually
 
-- Add file upload handling on your backend 
-- Store uploaded images in cloud storage 
-- Store only the image URL/path in database
-
+- File upload handling on backend -> Store uploaded images in cloud storage and the image URL/path in database
+- Add AI assesment feature
 
 ## style guide
 
 ### Color Palette
+
 #### Light Mode
 
 Primary Color: #5B8BF6 (A soft blue - conveys trust, calm, and reliability)
@@ -46,6 +43,7 @@ Warning: #F6AD55 (Lighter orange)
 Error: #FC8181 (Softer red)
 
 ### Typography
+
 #### Font Choices
 
 Primary Font: "Outfit" - A modern, rounded sans-serif that's highly readable but has personality
@@ -62,6 +60,7 @@ Small/Caption: 14px (Regular, line height 1.4)
 Micro: 12px (Medium, line height 1.3)
 
 ### UI Elements
+
 #### Buttons
 
 Primary: Filled with primary color, 8px border radius
@@ -113,7 +112,7 @@ Clear visual distinction between user and AI
 
 Mood Tracker
 
-Use color gradients to represent mood range (cool colors for lower moods, warm colors for higher)
+Color gradients to represent mood range (cool colors for lower moods, warm colors for higher)
 Simple, intuitive emoji or icon representations for different moods
 Progress visualization with smooth animations
 
@@ -122,4 +121,3 @@ Dashboard
 Clean, minimal charts and graphs
 Information cards with clear hierarchy
 Focus on data visualization that's easy to understand
-
