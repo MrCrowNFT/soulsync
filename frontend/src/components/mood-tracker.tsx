@@ -2,7 +2,11 @@ import { useState, useCallback, memo } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { moods } from "@/data/moods";
 
-const MoodTracker: React.FC = () => {
+interface MoodTrackerProps {
+  onMoodSubmit?: () => void;
+}
+
+const MoodTracker: React.FC<MoodTrackerProps> = ({ onMoodSubmit }) => {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [localLoading, setLocalLoading] = useState<boolean>(false);
@@ -12,7 +16,7 @@ const MoodTracker: React.FC = () => {
   const newMood = useProfile((state) => state.newMood);
   const username = useProfile((state) => state.username);
   const userId = useProfile((state) => state._id);
-  
+
   // Derive isAuthenticated from the selected values
   const isAuthenticated = !!username && !!userId;
 
@@ -31,7 +35,12 @@ const MoodTracker: React.FC = () => {
         if (success) {
           setIsSubmitted(true);
 
-          // Hide the tracker for 30 minutes 
+          // Call the onMoodSubmit callback if provided
+          if (onMoodSubmit) {
+            onMoodSubmit();
+          }
+
+          // Hide the tracker for 30 minutes
           setTimeout(() => {
             setIsSubmitted(false);
             setSelectedMood(null);
@@ -47,7 +56,7 @@ const MoodTracker: React.FC = () => {
     } else if (!isAuthenticated) {
       setLocalError("You must be logged in to track your mood");
     }
-  }, [selectedMood, newMood, isAuthenticated]);
+  }, [selectedMood, newMood, isAuthenticated, onMoodSubmit]);
 
   if (isSubmitted) {
     return (
