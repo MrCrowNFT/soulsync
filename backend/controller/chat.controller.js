@@ -47,7 +47,7 @@ export const getChatEntries = async (req, res) => {
 
     const startTime = Date.now();
     const chatEntries = await ChatEntry.find({ userId: userId })
-      .sort({ createdAt: -1 }) // get most recent
+      .sort({ createdAt: 1 }) // from oldest to newest for it to be shown properly on the ui
       .limit(limit); // default to 100 entries
     const queryTime = Date.now() - startTime;
 

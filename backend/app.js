@@ -12,11 +12,13 @@ import userRouter from "./routers/user.routes.js";
 const app = express();
 dotenv.config();
 
+const FRONTEND = process.env.FRONTEND_URL;
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", //only accept from here where frontend is running
+    origin: FRONTEND, //only accept from here where frontend is running
     credentials: true, //need this for the cookies to work cross origin
   })
 );
@@ -26,8 +28,7 @@ app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
 app.use("/user", authenticate, userRouter);
 
-const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => {
   connectDB();
-  console.log("Server started at http://localhost:" + PORT);
+  console.log("Server starting...");
 });
