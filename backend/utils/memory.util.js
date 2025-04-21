@@ -81,53 +81,114 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       });
     });
 
-    // Extract likes
-    doc.match("(like|love|enjoy) [.+]").forEach((match) => {
-      const like = match.groups().pop(); // Get what's after like/love/enjoy
-      if (like && like.text()) {
-        entities.likes.push(like.text());
+    // Extract likes - Fixed pattern matching
+    doc.match("(like|love|enjoy) *").forEach((match) => {
+      const terms = match.terms();
+      if (terms.length > 1) {
+        // Get what's after like/love/enjoy
+        const likedThing = terms
+          .slice(1)
+          .map((t) => t.text())
+          .join(" ")
+          .trim();
+        if (likedThing) {
+          entities.likes.push(likedThing);
+        }
       }
     });
 
-    // Extract dislikes
-    doc.match("(hate|dislike|can't stand) [.+]").forEach((match) => {
-      const dislike = match.groups().pop();
-      if (dislike && dislike.text()) {
-        entities.dislikes.push(dislike.text());
+    // Extract dislikes - Fixed pattern matching
+    doc.match("(hate|dislike|can't stand) *").forEach((match) => {
+      const terms = match.terms();
+      if (terms.length > 1) {
+        const dislikedThing = terms
+          .slice(1)
+          .map((t) => t.text())
+          .join(" ")
+          .trim();
+        if (dislikedThing) {
+          entities.dislikes.push(dislikedThing);
+        }
       }
     });
 
-    // Extract goals
+    // Extract goals - Fixed pattern matching
     doc
-      .match("(want to|going to|plan to|hope to|goal is to) [.+]")
+      .match("(want to|going to|plan to|hope to|goal is to) *")
       .forEach((match) => {
-        const goal = match.groups().pop();
-        if (goal && goal.text()) {
-          entities.goals.push(goal.text());
+        const terms = match.terms();
+        const triggerWords = ["want", "going", "plan", "hope", "goal"];
+
+        // Find the index where the actual goal starts
+        let startIndex = 0;
+        for (let i = 0; i < terms.length; i++) {
+          const term = terms[i].text().toLowerCase();
+          if (
+            triggerWords.some((word) => term.includes(word)) ||
+            term === "to" ||
+            term === "is"
+          ) {
+            startIndex = i + 1;
+          }
+        }
+
+        if (startIndex < terms.length) {
+          const goalText = terms
+            .slice(startIndex)
+            .map((t) => t.text())
+            .join(" ")
+            .trim();
+          if (goalText) {
+            entities.goals.push(goalText);
+          }
         }
       });
 
-    // Extract pets
-    doc.match("(my|our) (dog|cat|pet) [.+]").forEach((match) => {
-      const pet = match.groups().pop();
-      if (pet && pet.has("#ProperNoun")) {
-        entities.pets.push(pet.text());
+    // Extract pets - Fixed pattern matching
+    doc.match("(my|our) (dog|cat|pet) *").forEach((match) => {
+      const terms = match.terms();
+      if (terms.length > 2) {
+        const petName = terms
+          .slice(2)
+          .map((t) => t.text())
+          .join(" ")
+          .trim();
+        if (petName && nlp(petName).has("#ProperNoun")) {
+          entities.pets.push(petName);
+        }
       }
     });
 
-    // Extract hobbies
-    doc.match("(hobby|interest|passion) is [.+]").forEach((match) => {
-      const hobby = match.groups().pop();
-      if (hobby && hobby.text()) {
-        entities.hobbies.push(hobby.text());
+    // Extract hobbies - Fixed pattern matching
+    doc.match("(hobby|interest|passion) is *").forEach((match) => {
+      const terms = match.terms();
+      if (terms.length > 2) {
+        const hobbyText = terms
+          .slice(2)
+          .map((t) => t.text())
+          .join(" ")
+          .trim();
+        if (hobbyText) {
+          entities.hobbies.push(hobbyText);
+        }
       }
     });
 
-    // Extract personality traits
-    doc.match("(i am|i'm) a [#Adjective]").forEach((match) => {
-      const trait = match.groups().pop();
-      if (trait && trait.text()) {
-        entities.personality.push(trait.text());
+    // Extract personality traits - Fixed pattern matching
+    doc.match("(i am|i'm) a *").forEach((match) => {
+      const terms = match.terms();
+      const startIndex =
+        terms.findIndex((t) => t.text().toLowerCase() === "a") + 1;
+
+      if (startIndex > 0 && startIndex < terms.length) {
+        const traitText = terms
+          .slice(startIndex)
+          .map((t) => t.text())
+          .join(" ")
+          .trim();
+        if (traitText && nlp(traitText).has("#Adjective")) {
+          entities.personality.push(traitText);
+        }
       }
     });
 

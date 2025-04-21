@@ -4,6 +4,8 @@ Node js + express backend, react with ts frontend, this is because some ai tools
 
 ## TODO MVP
 
+- Add Images to homepage
+- Documentation
 - debuging -> AI Chat
 - Testing -> jest testing
 
