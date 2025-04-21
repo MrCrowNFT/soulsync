@@ -240,42 +240,86 @@ export const analyzeAndExtractMemory = async (userId, message) => {
  * @returns {Promise<Array>} - Array of relevant memory objects
  */
 export const fetchRelevantMemories = async (userId, message) => {
+  console.log("------ MEMORY RETRIEVAL STARTED ------");
+  console.log(`User ID: ${userId}`);
+  console.log(`Message: "${message}"`);
+
   try {
     // Process the message with compromise
     const doc = nlp(message);
+    console.log("NLP processing completed");
+
+    // Create a results array to track all potential matches with relevance scores
+    let potentialMatches = [];
 
     // Extract entities for targeted searches
     const people = doc.people().out("array");
     const places = doc.places().out("array");
     const nouns = doc.nouns().out("array");
+    const topics = [
+      ...new Set([...nouns, ...doc.match("#Singular").out("array")]),
+    ].filter((t) => t.length > 2);
 
-    // Create search queries - first try exact entity matches
-    const queries = [];
+    console.log(
+      `Entities found - People: ${people.length}, Places: ${places.length}, Topics: ${topics.length}`
+    );
+
+    // STEP 1: Entity-specific search
+    const entityQueries = [];
 
     if (people.length > 0) {
-      queries.push({ userId, people: { $in: people } });
+      console.log(`Searching for people: ${people.join(", ")}`);
+      entityQueries.push({ userId, people: { $in: people } });
     }
 
     if (places.length > 0) {
-      queries.push({ userId, locations: { $in: places } });
+      console.log(`Searching for places: ${places.join(", ")}`);
+      entityQueries.push({ userId, locations: { $in: places } });
+    }
+
+    if (topics.length > 0) {
+      console.log(`Searching for topics: ${topics.join(", ")}`);
+      entityQueries.push({ userId, topics: { $in: topics } });
     }
 
     // Execute entity-specific search
-    if (queries.length > 0) {
-      const entityResults = await Memory.find({ $or: queries })
+    if (entityQueries.length > 0) {
+      console.log("Executing entity search query");
+      const entityResults = await Memory.find({ $or: entityQueries })
         .sort({ createdAt: -1 })
-        .limit(5);
+        .limit(10);
 
-      if (entityResults.length > 0) {
-        return entityResults;
-      }
+      console.log(`Entity search found ${entityResults.length} memories`);
+
+      entityResults.forEach((memory) => {
+        // Calculate relevance score - higher priority for entity matches
+        let score = 3.0; // Base score for entity matches
+
+        // Boost score based on entity type matches
+        if (people.some((p) => memory.people.includes(p))) score += 2;
+        if (places.some((p) => memory.locations.includes(p))) score += 1.5;
+        if (topics.some((t) => memory.topics.includes(t))) score += 1;
+
+        // Recency boost (diminishing over time)
+        const ageInDays =
+          (Date.now() - new Date(memory.createdAt).getTime()) /
+          (1000 * 3600 * 24);
+        score += Math.max(0, 1 - ageInDays / 30); // Recency boost diminishes over 30 days
+
+        potentialMatches.push({
+          memory,
+          score,
+          matchType: "entity",
+          explanation: `Entity match: found specific people, places or topics`,
+        });
+      });
     }
 
-    // Build semantic search terms
+    // STEP 2: Build semantic search terms
     const searchTerms = [
       ...people,
       ...places,
-      ...nouns,
+      ...topics,
       ...doc.adjectives().out("array"),
       ...doc.verbs().out("array"),
     ]
@@ -285,6 +329,7 @@ export const fetchRelevantMemories = async (userId, message) => {
     // If we have search terms, use text search
     if (searchTerms.length > 0) {
       const searchString = searchTerms.join(" ");
+      console.log(`Text search using: ${searchString}`);
 
       const textSearchResults = await Memory.find(
         {
@@ -296,23 +341,46 @@ export const fetchRelevantMemories = async (userId, message) => {
         }
       )
         .sort({ score: { $meta: "textScore" } })
-        .limit(5);
+        .limit(10);
 
-      if (textSearchResults.length > 0) {
-        return textSearchResults;
-      }
+      console.log(`Text search found ${textSearchResults.length} memories`);
+
+      textSearchResults.forEach((memory) => {
+        // MongoDB text search already gives us a score, let's adapt it
+        const textScore = memory._doc.score || 1.0;
+
+        // Adjusted score based on text search + recency
+        const ageInDays =
+          (Date.now() - new Date(memory.createdAt).getTime()) /
+          (1000 * 3600 * 24);
+        const recencyBoost = Math.max(0, 1 - ageInDays / 30);
+
+        const finalScore = textScore * 1.5 + recencyBoost;
+
+        potentialMatches.push({
+          memory,
+          score: finalScore,
+          matchType: "text",
+          explanation: `Text match with score ${textScore.toFixed(2)}`,
+        });
+      });
     }
 
-    // Detect emotional content for emotion-based matching
+    // STEP 3: Detect emotional content for emotion-based matching
     const sentimentResult = sentimentAnalyzer.analyze(message);
+    console.log(`Sentiment analysis score: ${sentimentResult.score}`);
+
     let emotionQuery = null;
+    let emotionType = "neutral";
 
     if (sentimentResult.score > 2) {
+      emotionType = "positive";
       emotionQuery = {
         userId,
         emotions: { $in: ["positive", "happy", "excited", "joyful"] },
       };
     } else if (sentimentResult.score < -2) {
+      emotionType = "negative";
       emotionQuery = {
         userId,
         emotions: { $in: ["negative", "sad", "angry", "anxious"] },
@@ -320,19 +388,106 @@ export const fetchRelevantMemories = async (userId, message) => {
     }
 
     if (emotionQuery) {
+      console.log(`Searching for ${emotionType} emotional memories`);
       const emotionResults = await Memory.find(emotionQuery)
+        .sort({ createdAt: -1 })
+        .limit(5);
+
+      console.log(`Emotion search found ${emotionResults.length} memories`);
+
+      emotionResults.forEach((memory) => {
+        const emotionScore = 1.0; // Base score for emotion matches
+
+        // Recency boost (diminishing over time)
+        const ageInDays =
+          (Date.now() - new Date(memory.createdAt).getTime()) /
+          (1000 * 3600 * 24);
+        const recencyBoost = Math.max(0, 1 - ageInDays / 30);
+
+        potentialMatches.push({
+          memory,
+          score: emotionScore + recencyBoost,
+          matchType: "emotion",
+          explanation: `Emotional match: ${emotionType}`,
+        });
+      });
+    }
+
+    // STEP 4: Make sure we have enough potential matches, if not, add some recent ones
+    if (potentialMatches.length < 2) {
+      console.log("Not enough matches found, adding recent memories");
+      const recentMemories = await Memory.find({ userId })
         .sort({ createdAt: -1 })
         .limit(3);
 
-      if (emotionResults.length > 0) {
-        return emotionResults;
+      recentMemories.forEach((memory) => {
+        // Check if this memory is already in potentialMatches
+        const isDuplicate = potentialMatches.some(
+          (pm) => pm.memory._id.toString() === memory._id.toString()
+        );
+
+        if (!isDuplicate) {
+          potentialMatches.push({
+            memory,
+            score: 0.5, // Lower score for recent-only matches
+            matchType: "recent",
+            explanation: "Recent memory (fallback)",
+          });
+        }
+      });
+    }
+
+    //todo maybe add a limit on the score to check if is actually relevant
+    // STEP 5: Remove duplicates, sort by score, and take the top matches
+    const uniqueMatches = [];
+    const seenIds = new Set();
+
+    for (const match of potentialMatches) {
+      const memoryId = match.memory._id.toString();
+      if (!seenIds.has(memoryId)) {
+        uniqueMatches.push(match);
+        seenIds.add(memoryId);
+      } else {
+        // If we've seen this memory before, update its score if this one is higher
+        const existingIndex = uniqueMatches.findIndex(
+          (m) => m.memory._id.toString() === memoryId
+        );
+
+        if (
+          existingIndex >= 0 &&
+          match.score > uniqueMatches[existingIndex].score
+        ) {
+          uniqueMatches[existingIndex] = match;
+        }
       }
     }
 
-    // Last resort: recent memories
-    return await Memory.find({ userId }).sort({ createdAt: -1 }).limit(3);
+    // Sort by score (descending)
+    uniqueMatches.sort((a, b) => b.score - a.score);
+
+    // Take top 3
+    const finalMatches = uniqueMatches.slice(0, 3);
+
+    // Log the selected memories with their scores
+    console.log("Final selected memories:");
+    finalMatches.forEach((match, idx) => {
+      console.log(
+        `${idx + 1}. [${match.matchType}] Score: ${match.score.toFixed(2)} - ${
+          match.explanation
+        }`
+      );
+      console.log(`   Memory: "${match.memory.memory.substring(0, 50)}..."`);
+    });
+
+    console.log("------ MEMORY RETRIEVAL COMPLETED ------");
+
+    // Return only the Memory objects
+    return finalMatches.map((match) => match.memory);
   } catch (error) {
-    console.error("Error fetching relevant memories:", error);
+    console.error("------ MEMORY RETRIEVAL FAILED ------");
+    console.error(`Error type: ${error.name}`);
+    console.error(`Error message: ${error.message}`);
+    console.error(`Error stack: ${error.stack}`);
     return [];
   }
 };
