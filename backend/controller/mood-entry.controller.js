@@ -127,6 +127,18 @@ export const getEntries = async (req, res) => {
     console.log(
       `Mood averages calculation result: ${averages ? "Successful" : "Failed"}`
     );
+   
+    console.log(`Raw aggregation results:`, averages);
+    console.log(`Formatted data:`, {
+      labels: averages.labels,
+      hasLabels: averages.labels && averages.labels.length > 0,
+      datasets: averages.datasets.map((ds) => ({
+        label: ds.label,
+        dataLength: ds.data.length,
+        hasData: ds.data && ds.data.length > 0,
+        sampleData: ds.data.slice(0, 3), // Show first 3 items if any
+      })),
+    });
 
     console.log("------ GET ENTRIES PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(200).json({ success: true, data: averages });

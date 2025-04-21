@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart,
@@ -54,8 +54,6 @@ const MoodGraph = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Prevent API call on first render
-  const initialRender = useRef(true);
   // Function to detect dark mode
   const detectDarkMode = useCallback(() => {
     return document.documentElement.classList.contains("dark");
@@ -99,10 +97,35 @@ const MoodGraph = () => {
         setError(null);
         console.log(`Directly fetching mood data for ${period}...`);
 
-        // Replace with your actual API endpoint
+        // Make sure we're using the correct API endpoint
         const response = await api.get(`/mood/${period}`);
 
-        setMoodData(response.data);
+        console.log("API response:", response);
+
+        // Get the data from the response
+        const data = response.data;
+
+        // Format the data properly
+        const formattedData = {
+          labels: data?.labels || [],
+          datasets: data?.datasets || [],
+        };
+
+        console.log("Formatted data:", formattedData);
+
+        // Check if there's actual data in the datasets
+        const hasData = formattedData.datasets.some(
+          (dataset) => dataset.data && dataset.data.length > 0
+        );
+
+        console.log("Has data:", hasData);
+
+        // If there's no data, we'll still set the moodData but log it
+        if (!hasData) {
+          console.log("No data points found in the datasets");
+        }
+
+        setMoodData(formattedData);
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching mood data:", err);
@@ -113,24 +136,10 @@ const MoodGraph = () => {
     []
   );
 
-  // Single useEffect to handle all cases
+  // Fetch data when component mounts or time period changes
   useEffect(() => {
     fetchMoodData(timePeriod);
-    // No dependency on initialRender needed
   }, [timePeriod, fetchMoodData]);
-
-  // Apply dark mode styles to the chart
-  const darkModeStyles = {
-    backgroundColor: "#1f2937",
-    borderColor: "#4b5563",
-    color: "#f3f4f6",
-  };
-
-  const lightModeStyles = {
-    backgroundColor: "#ffffff",
-    borderColor: "#e5e7eb",
-    color: "#374151",
-  };
 
   // Chart options with dark/light mode support
   const chartOptions = {
@@ -140,7 +149,7 @@ const MoodGraph = () => {
       legend: {
         position: "top" as const,
         labels: {
-          color: isDarkMode ? darkModeStyles.color : lightModeStyles.color,
+          color: isDarkMode ? "#f3f4f6" : "#374151",
         },
       },
       title: {
@@ -148,35 +157,31 @@ const MoodGraph = () => {
         text: `${
           timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)
         } Mood Trends`,
-        color: isDarkMode ? darkModeStyles.color : lightModeStyles.color,
+        color: isDarkMode ? "#f3f4f6" : "#374151",
       },
     },
     scales: {
       x: {
         grid: {
-          color: isDarkMode
-            ? darkModeStyles.borderColor
-            : lightModeStyles.borderColor,
+          color: isDarkMode ? "#4b5563" : "#e5e7eb",
         },
         ticks: {
-          color: isDarkMode ? darkModeStyles.color : lightModeStyles.color,
+          color: isDarkMode ? "#f3f4f6" : "#374151",
         },
       },
       y: {
         beginAtZero: true,
         max: 10,
         grid: {
-          color: isDarkMode
-            ? darkModeStyles.borderColor
-            : lightModeStyles.borderColor,
+          color: isDarkMode ? "#4b5563" : "#e5e7eb",
         },
         ticks: {
-          color: isDarkMode ? darkModeStyles.color : lightModeStyles.color,
+          color: isDarkMode ? "#f3f4f6" : "#374151",
         },
         title: {
           display: true,
           text: "Mood Level",
-          color: isDarkMode ? darkModeStyles.color : lightModeStyles.color,
+          color: isDarkMode ? "#f3f4f6" : "#374151",
         },
       },
     },
@@ -195,6 +200,15 @@ const MoodGraph = () => {
       })),
     };
   };
+
+  // Function to check if there's actual data in the datasets
+  const hasActualData = useCallback((data: any) => {
+    return (
+      data?.datasets?.some(
+        (dataset: any) => dataset.data && dataset.data.length > 0
+      ) || false
+    );
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -227,9 +241,10 @@ const MoodGraph = () => {
         <div className="w-full p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
           Error loading mood data: {error}
         </div>
-      ) : !moodData || !moodData.labels || moodData.labels.length === 0 ? (
+      ) : !hasActualData(moodData) ? (
         <div className="w-full p-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 rounded-lg">
-          No mood data available for the selected time period.
+          No mood data available for the selected time period. Try adding some
+          mood entries first.
         </div>
       ) : (
         <div className="w-full md:w-3/4 lg:w-1/2 p-4 mx-auto bg-white dark:bg-gray-800 rounded-lg transition-colors duration-300 h-64">

@@ -1,12 +1,16 @@
-import {MoodEntry} from "../models/mood-entry.model.js";
+import { MoodEntry } from "../models/mood-entry.model.js";
 import { formatMoodData } from "../utils/mood-entry.util.js";
+import mongoose from "mongoose";
 
 //Helper functions
 export const getWeeklyAverages = async (userId) => {
+  //had to make the id into a mongoose object, otherwise the user could not be found becuase of how mongo db stores the userId
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   const weeklyAverages = await MoodEntry.aggregate([
     {
       $match: {
-        userId: userId,
+        userId: userObjectId,
         createdAt: {
           $gte: new Date(new Date().setDate(new Date().getDate() - 7)),
         }, //Last 7 days, i think this should work, confusing af
