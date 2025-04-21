@@ -28,7 +28,7 @@ app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
 app.use("/user", authenticate, userRouter);
 
-app.listen(PORT, () => {
+app.listen(() => {
   connectDB();
   console.log("Server starting...");
 });
