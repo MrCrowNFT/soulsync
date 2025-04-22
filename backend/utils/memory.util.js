@@ -237,12 +237,18 @@ export const analyzeAndExtractMemory = async (userId, message) => {
  * Fetches memories relevant to the current message
  * @param {string} userId - The user ID
  * @param {string} message - The current message to find relevant memories for
+ * @param {number} [relevanceThreshold=1.0] - Minimum relevance score to include a memory
  * @returns {Promise<Array>} - Array of relevant memory objects
  */
-export const fetchRelevantMemories = async (userId, message) => {
+export const fetchRelevantMemories = async (
+  userId,
+  message,
+  relevanceThreshold = 1.0
+) => {
   console.log("------ MEMORY RETRIEVAL STARTED ------");
   console.log(`User ID: ${userId}`);
   console.log(`Message: "${message}"`);
+  console.log(`Relevance threshold: ${relevanceThreshold}`);
 
   try {
     // Process the message with compromise
@@ -413,32 +419,7 @@ export const fetchRelevantMemories = async (userId, message) => {
       });
     }
 
-    // STEP 4: Make sure we have enough potential matches, if not, add some recent ones
-    if (potentialMatches.length < 2) {
-      console.log("Not enough matches found, adding recent memories");
-      const recentMemories = await Memory.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(3);
-
-      recentMemories.forEach((memory) => {
-        // Check if this memory is already in potentialMatches
-        const isDuplicate = potentialMatches.some(
-          (pm) => pm.memory._id.toString() === memory._id.toString()
-        );
-
-        if (!isDuplicate) {
-          potentialMatches.push({
-            memory,
-            score: 0.5, // Lower score for recent-only matches
-            matchType: "recent",
-            explanation: "Recent memory (fallback)",
-          });
-        }
-      });
-    }
-
-    //todo maybe add a limit on the score to check if is actually relevant
-    // STEP 5: Remove duplicates, sort by score, and take the top matches
+    // STEP 4: Remove duplicates, sort by score
     const uniqueMatches = [];
     const seenIds = new Set();
 
@@ -465,11 +446,20 @@ export const fetchRelevantMemories = async (userId, message) => {
     // Sort by score (descending)
     uniqueMatches.sort((a, b) => b.score - a.score);
 
-    // Take top 3
-    const finalMatches = uniqueMatches.slice(0, 3);
+    // STEP 5: Filter by relevance threshold before taking top matches
+    const relevantMatches = uniqueMatches.filter(
+      (match) => match.score >= relevanceThreshold
+    );
+
+    // Take top 3 from relevant matches
+    const finalMatches = relevantMatches.slice(0, 3);
 
     // Log the selected memories with their scores
-    console.log("Final selected memories:");
+    console.log(
+      `Found ${relevantMatches.length} memories above relevance threshold (${relevanceThreshold})`
+    );
+    console.log(`Selected ${finalMatches.length} final memories:`);
+
     finalMatches.forEach((match, idx) => {
       console.log(
         `${idx + 1}. [${match.matchType}] Score: ${match.score.toFixed(2)} - ${
@@ -479,9 +469,14 @@ export const fetchRelevantMemories = async (userId, message) => {
       console.log(`   Memory: "${match.memory.memory.substring(0, 50)}..."`);
     });
 
+    // If no relevant memories were found, log this explicitly
+    if (finalMatches.length === 0) {
+      console.log("No memories met the relevance threshold criteria");
+    }
+
     console.log("------ MEMORY RETRIEVAL COMPLETED ------");
 
-    // Return only the Memory objects
+    // Return only the Memory objects from matches above threshold
     return finalMatches.map((match) => match.memory);
   } catch (error) {
     console.error("------ MEMORY RETRIEVAL FAILED ------");
