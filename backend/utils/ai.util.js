@@ -27,12 +27,12 @@ export const getLLMResponse = async (message, memories) => {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    console.log(`Truncating memories from ${memories.length} to max 3...`);
-    const truncatedMemories = memories.slice(0, 3); // prevent token explosion so wallet don't die
-    console.log(`Using ${truncatedMemories.length} memories for context`);
+    // Process memories for context
+    const relevantMemories = memories.slice(0, 3); // prevent token explosion
+    console.log(`Using ${relevantMemories.length} memories for context`);
 
     // Log memory content
-    truncatedMemories.forEach((mem, idx) => {
+    relevantMemories.forEach((mem, idx) => {
       console.log(
         `Memory ${idx + 1}: ${
           mem.memory ? mem.memory.substring(0, 50) + "..." : "[empty]"
@@ -40,10 +40,15 @@ export const getLLMResponse = async (message, memories) => {
       );
     });
 
-    const memoryContext =
-      truncatedMemories.length > 0
-        ? truncatedMemories.map((m) => m.memory).join(" | ")
-        : "No prior context";
+    // Format memories properly for context
+    let memoryContext = "";
+    if (relevantMemories.length > 0) {
+      memoryContext = relevantMemories
+        .map((m, i) => `Memory ${i + 1}: ${m.memory}`)
+        .join("\n\n");
+    } else {
+      memoryContext = "No previous memories available";
+    }
 
     console.log("Memory context length:", memoryContext.length);
     console.log(
@@ -52,8 +57,9 @@ export const getLLMResponse = async (message, memories) => {
         (memoryContext.length > 100 ? "..." : "")
     );
 
+    // Extract personality traits for additional context
     console.log("Extracting personality traits...");
-    const allTraits = truncatedMemories.flatMap((m) => m.personality);
+    const allTraits = relevantMemories.flatMap((m) => m.personality || []);
     console.log(
       `All traits found: ${allTraits.length ? allTraits.join(", ") : "none"}`
     );
@@ -65,32 +71,49 @@ export const getLLMResponse = async (message, memories) => {
 
     console.log(`Selected personality traits: ${personalityTraits || "none"}`);
 
-    const prompt = `
-      User: "${message}"
-      
-      Context: ${memoryContext}${
-      personalityTraits ? ` | User self-describes as: ${personalityTraits}` : ""
-    }
-      
-      Respond in 1-3 sentences as a supportive friend would. Be concise, warm, and conversational. Use natural, casual language. Match the user's tone and energy level. Refer to memories naturally without explicitly mentioning them.
-      Keep responses short even when the input is short.
-      `.trim();
+    // Build a clear system prompt with better context separation
+    const systemPrompt = `
+      You are a supportive, conversational mental health companion. Keep responses brief, genuine and human-like.
+      Never use corporate or robotic language. Respond in 1-3 sentences as a supportive friend would.
 
-    console.log("Prompt length:", prompt.length);
-    console.log("Prompt preview:", prompt.substring(0, 150) + "...");
+      The user has previous memories that you should use as context for understanding them better.
+      DO NOT directly respond to or reference these memories unless the user explicitly asks about them.
+      The memories are provided ONLY to help you understand the user's background and situation.
+
+      ${
+        personalityTraits
+          ? `The user self-describes as: ${personalityTraits}`
+          : ""
+      }
+
+      Be concise, warm, and conversational. Use natural, casual language. Match the user's tone and energy level.
+      Keep responses short even when the input is short.
+    `.trim();
+
+    // Prepare messages with clear separation of user message and memory context
+    const messages = [{ role: "system", content: systemPrompt }];
+
+    // Add memories as a separate context message from the assistant
+    if (relevantMemories.length > 0) {
+      messages.push({
+        role: "assistant",
+        content: `I'll remember these things about you:\n\n${memoryContext}`,
+      });
+    }
+
+    // Add the actual user message as the thing to respond to
+    messages.push({ role: "user", content: message });
+
+    console.log(
+      "Messages array structure prepared with clear context separation"
+    );
+    console.log(`Total messages: ${messages.length}`);
 
     console.log("Sending request to OpenAI...");
     console.time("openai_request_time");
     const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a supportive, conversational mental health companion. Keep responses brief, genuine and human-like. Never use corporate or robotic language.",
-        },
-        { role: "user", content: prompt },
-      ],
+      messages: messages,
       temperature: 0.8, // Increased for more natural variation
       max_tokens: 200, // Reduced to encourage brevity
       presence_penalty: 0.6, // Added to discourage repetitive language
