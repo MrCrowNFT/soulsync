@@ -237,18 +237,25 @@ export const analyzeAndExtractMemory = async (userId, message) => {
  * Fetches memories relevant to the current message
  * @param {string} userId - The user ID
  * @param {string} message - The current message to find relevant memories for
- * @param {number} [relevanceThreshold=1.0] - Minimum relevance score to include a memory
+ * @param {Object} options - Configuration options
+ * @param {number} [options.minRelevanceScore=1.5] - Absolute minimum relevance score to include a memory
+ * @param {number} [options.relativeToBestRatio=0.3] - Only include memories with scores at least this ratio of the best score
+ * @param {number} [options.maxMemories=3] - Maximum number of memories to return
  * @returns {Promise<Array>} - Array of relevant memory objects
  */
-export const fetchRelevantMemories = async (
-  userId,
-  message,
-  relevanceThreshold = 1.0
-) => {
+export const fetchRelevantMemories = async (userId, message, options = {}) => {
+  // Default options
+  const {
+    minRelevanceScore = 1.5,
+    relativeToBestRatio = 0.3,
+    maxMemories = 3,
+  } = options;
+
   console.log("------ MEMORY RETRIEVAL STARTED ------");
   console.log(`User ID: ${userId}`);
   console.log(`Message: "${message}"`);
-  console.log(`Relevance threshold: ${relevanceThreshold}`);
+  console.log(`Min relevance threshold: ${minRelevanceScore}`);
+  console.log(`Relative to best ratio: ${relativeToBestRatio}`);
 
   try {
     // Process the message with compromise
@@ -446,19 +453,32 @@ export const fetchRelevantMemories = async (
     // Sort by score (descending)
     uniqueMatches.sort((a, b) => b.score - a.score);
 
-    // STEP 5: Filter by relevance threshold before taking top matches
-    const relevantMatches = uniqueMatches.filter(
-      (match) => match.score >= relevanceThreshold
-    );
+    // STEP 5: Apply advanced relevance filtering
+    let finalMatches = [];
 
-    // Take top 3 from relevant matches
-    const finalMatches = relevantMatches.slice(0, 3);
+    if (uniqueMatches.length > 0) {
+      // Get the highest score for relative comparison
+      const highestScore = uniqueMatches[0].score;
+      const relativeThreshold = highestScore * relativeToBestRatio;
+
+      // Calculate the effective threshold (take the higher of minimum and relative)
+      const effectiveThreshold = Math.max(minRelevanceScore, relativeThreshold);
+
+      console.log(`Highest memory score: ${highestScore.toFixed(2)}`);
+      console.log(
+        `Effective relevance threshold: ${effectiveThreshold.toFixed(2)}`
+      );
+
+      // Apply the threshold and take up to maxMemories
+      finalMatches = uniqueMatches
+        .filter((match) => match.score >= effectiveThreshold)
+        .slice(0, maxMemories);
+    }
 
     // Log the selected memories with their scores
     console.log(
-      `Found ${relevantMatches.length} memories above relevance threshold (${relevanceThreshold})`
+      `Selected ${finalMatches.length} memories after relevance filtering:`
     );
-    console.log(`Selected ${finalMatches.length} final memories:`);
 
     finalMatches.forEach((match, idx) => {
       console.log(

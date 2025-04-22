@@ -4,10 +4,9 @@ export const refreshAccessTokenRequest = async () => {
   try {
     const accessToken = localStorage.getItem("accessToken");
 
-    const urlApi = import.meta.env.API_URL;
-    //todo fix this, to the deployed address
+    const urlApi = import.meta.env.VITE_API_URL;
     const res = await axios.post(
-      `${urlApi}/auth//refresh-token`,
+      `${urlApi}/auth/refresh-token`,
       {},
       {
         headers: {

@@ -28,7 +28,9 @@ app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
 app.use("/user", authenticate, userRouter);
 
-app.listen(() => {
+const PORT = process.env.PORT;
+
+app.listen(PORT, () => {
   connectDB();
-  console.log("Server starting...");
+  console.log(`Server starting on port ${PORT}...`);
 });
