@@ -4,7 +4,8 @@ export const refreshAccessTokenRequest = async () => {
   try {
     const accessToken = localStorage.getItem("accessToken");
 
-    const urlApi = import.meta.env.VITE_API_URL;
+    const urlApi =
+      import.meta.env.VITE_API_URL || "https://soulsync-fxrq.onrender.com";
     const res = await axios.post(
       `${urlApi}/auth/refresh-token`,
       {},
