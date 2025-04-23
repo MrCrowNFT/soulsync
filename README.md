@@ -1,6 +1,8 @@
 # Soulsync
 
-![SoulSync Logo](frontend/public/mental-health-icon.svg)
+<p align="center">
+  <img src="frontend/public/mental-health-icon.svg" alt="SoulSync Logo" width="200" />
+</p>
 
 **Soulsync** is a mental health and wellness AI-powered app designed to give users a supportive conversational companion available 24/7. Built with a Node.js + Express backend and a React + TypeScript frontend, it integrates sentiment analysis, NLP, and OpenAI's API to provide warm, emotionally intelligent responses.
 
