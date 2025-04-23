@@ -1,125 +1,94 @@
-# soulsync
+# Soulsync
 
-Node js + express backend, react with ts frontend, this is because some ai tools are not yet well adapted to ts
+![SoulSync Logo](frontend/public/mental-health-icon.svg)
 
-## TODO MVP
+**Soulsync** is a mental health and wellness AI-powered app designed to give users a supportive conversational companion available 24/7. Built with a Node.js + Express backend and a React + TypeScript frontend, it integrates sentiment analysis, NLP, and OpenAI's API to provide warm, emotionally intelligent responses.
 
-- Add Images to homepage
-- Documentation
-- debuging -> AI Chat
-- Testing -> jest testing
+---
 
-## Future update
+## Description
 
-- File upload handling on backend -> Store uploaded images in cloud storage and the image URL/path in database
-- Add AI assesment feature
+Soulsync offers a unique chat experience that combines real-time sentiment analysis and memory-based context retrieval to generate thoughtful, personalized responses. The app also includes a **mood tracker** that helps users reflect on their emotional wellbeing over time (daily, weekly, monthly).
 
-## style guide
+> "Everyone deserves someone to talk to—especially during hard times. Soulsync is your always-available, emotionally aware companion."
 
-### Color Palette
+### Tech Stack
 
-#### Light Mode
+- **Backend:** Node.js, Express, MongoDB
+- **Frontend:** React (Vite) with TypeScript, TailwindCSS
+- **AI Integration:** OpenAI API (GPT), Compromise NLP, Sentiment Analysis
+- **Hosting:** Render (backend), Vercel (frontend)
 
-Primary Color: #5B8BF6 (A soft blue - conveys trust, calm, and reliability)
-Secondary Color: #7C64E6 (A gentle purple - represents creativity and emotional intelligence)
-Accent Color: #3ECBC2 (A refreshing teal - symbolizes growth and healing)
-Background: #F8F9FC (Off-white - clean but not harsh)
-Surface/Card: #FFFFFF (White)
-Text - Primary: #2D3748 (Dark slate - easy to read but softer than black)
-Text - Secondary: #718096 (Medium gray - for less important text)
-Success: #48BB78 (Green - for positive feedback)
-Warning: #ED8936 (Orange - for cautions)
-Error: #E53E3E (Red - for errors, but a softer shade)
+---
 
-#### Dark Mode
+## 🚀 Quick Start
 
-Primary Color: #6B95FB (Slightly lighter blue than light mode)
-Secondary Color: #8E7AEA (Adjusted purple for dark backgrounds)
-Accent Color: #4EDBD2 (Brighter teal for contrast)
-Background: #1A202C (Deep blue-gray - less harsh than pure black)
-Surface/Card: #2D3748 (Slightly lighter than background)
-Text - Primary: #F7FAFC (Off-white - easy on the eyes)
-Text - Secondary: #A0AEC0 (Light gray)
-Success: #68D391 (Brighter green for dark mode visibility)
-Warning: #F6AD55 (Lighter orange)
-Error: #FC8181 (Softer red)
+1. **Clone the repository:**
 
-### Typography
+```bash
+git clone https://github.com/MrCrowNFT/soulsync
+cd soulsync
+```
 
-#### Font Choices
+2. **Install dependencies:**
 
-Primary Font: "Outfit" - A modern, rounded sans-serif that's highly readable but has personality
-Secondary Font: "Inter" - Clean and versatile for UI elements
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
 
-#### Font Sizes
+3. **Set up environment variables:**
+   Create `.env` files in both `/backend` and `/frontend`. See `.env.example` for required variables.
 
-Heading 1: 28px (Bold, line height 1.2)
-Heading 2: 24px (Bold, line height 1.2)
-Heading 3: 20px (Semibold, line height 1.3)
-Heading 4: 18px (Semibold, line height 1.3)
-Body Text: 16px (Regular, line height 1.5)
-Small/Caption: 14px (Regular, line height 1.4)
-Micro: 12px (Medium, line height 1.3)
+4. **Start development servers:**
 
-### UI Elements
+```bash
+# From root directory
+cd backend && npm run dev
+cd ../frontend && npm run dev
+```
 
-#### Buttons
+---
 
-Primary: Filled with primary color, 8px border radius
-Secondary: Outlined with 1.5px border, 8px border radius
-Text Button: No background, just text in primary color
-All buttons should have a subtle hover effect (slight darkening or scaling)
+## Usage
 
-#### Cards & Containers
+- Sign up and start chatting.
+- The AI companion uses past conversations and inferred personality to tailor responses.
+- Track mood trends with the integrated mood journal.
 
-12px border radius for cards
-Subtle shadow: 0 4px 6px rgba(0, 0, 0, 0.05)
-16px padding inside cards
-20px spacing between major elements
+---
 
-#### Input Fields
+## Contributing
 
-8px border radius
-1px border in light gray (#E2E8F0 in light mode, #4A5568 in dark mode)
-Focus state: 2px border in primary color
-Clear visual distinction for active states
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
-#### Iconography
+---
 
-Rounded, friendly icon style (Similar to Phosphor Icons or Feather Icons)
-Icons should be 24px for navigation and 18px for inline
-Use icons sparingly to avoid overwhelming users
+## TODO
 
-Accessibility Considerations
+- [ ] Add AI-generated illustrations to homepage
+- [ ] Write complete technical documentation
+- [ ] Add unit + integration testing with Jest
+- [ ] Dockerize backend and frontend
+- [ ] Add CI/CD pipelines (GitHub Actions or similar)
 
-Ensure all text has sufficient contrast (WCAG AA standard minimum)
-Include focus indicators for keyboard navigation
-Design hover and active states for all interactive elements
+---
 
-Visual Language
+## Future Updates
 
-Tone: Warm and supportive
-Shapes: Rounded corners and soft edges
-Imagery: If using illustrations, opt for diverse, inclusive human figures with soft, friendly styling
-Animation: Subtle, smooth transitions (300-400ms duration) to create a sense of calm
-Spacing: Generous whitespace to avoid cluttered feelings
+- File uploads (cloud storage support)
+- AI-powered user assessments
+- RAG (Retrieval-Augmented Generation) for more informed responses
+- Panic mode: If user presses an alert button, chat sends a specialized prompt to LLM for immediate support response
 
-Special Components
-Chat Interface
+---
 
-Message bubbles with 12px border radius
-User messages in primary color, AI responses in secondary color
-Timestamps in small, light gray text
-Clear visual distinction between user and AI
+## 📷 Demo / Screenshots
 
-Mood Tracker
+_Coming soon: Add AI-generated homepage illustrations and demo walkthrough video links here._
 
-Color gradients to represent mood range (cool colors for lower moods, warm colors for higher)
-Simple, intuitive emoji or icon representations for different moods
-Progress visualization with smooth animations
+---
 
-Dashboard
+## 📄 License
 
-Clean, minimal charts and graphs
-Information cards with clear hierarchy
-Focus on data visualization that's easy to understand
+MIT
