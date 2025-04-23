@@ -23,7 +23,7 @@ Soulsync offers a unique chat experience that combines real-time sentiment analy
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Clone the repository:**
 
