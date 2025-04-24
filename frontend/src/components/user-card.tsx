@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { updateUserPayload } from "@/types/user";
 import { useProfile } from "@/hooks/use-profile";
+import defaulAvatar from "@/assets/default-avatar.svg";
 
 const UserCard: FunctionComponent = () => {
   // Get user data and updateProfile method from the state
@@ -131,7 +132,7 @@ const UserCard: FunctionComponent = () => {
             {editMode ? (
               <div className="relative w-full h-full group">
                 <img
-                  src={previewImage || photo || "default-avatar.svg"}
+                  src={defaulAvatar}
                   alt="user photo"
                   className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
                 />
@@ -150,7 +151,7 @@ const UserCard: FunctionComponent = () => {
               </div>
             ) : (
               <img
-                src={photo || "/default-avatar.png"}
+                src={defaulAvatar}
                 alt="User profile"
                 className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
               />

@@ -6,8 +6,8 @@ import { useProfile } from "@/hooks/use-profile";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const username = useProfile(state => state.username);
-  const isLoading = useProfile(state => state.isLoading);
+  const username = useProfile((state) => state.username);
+  const isLoading = useProfile((state) => state.isLoading);
   const [authChecked, setAuthChecked] = useState(false);
 
   // Check authentication status once component mounts
@@ -57,12 +57,15 @@ const Dashboard = () => {
   // Show dashboard content if authenticated
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
-        Your Dashboard
-      </h1>
-      <UserCard />
-      <MoodGraph />
-    </div>
+  <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
+    Your Dashboard
+  </h1>
+  <UserCard />
+  <div className="mt-8 w-full max-w-6xl mx-auto h-[400px]">
+    <MoodGraph />
+  </div>
+</div>
+
   );
 };
 

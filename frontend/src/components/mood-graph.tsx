@@ -267,7 +267,7 @@ const MoodGraph = () => {
           mood entries first.
         </div>
       ) : (
-        <div className="w-full md:w-3/4 lg:w-1/2 p-4 mx-auto bg-white dark:bg-gray-800 rounded-lg transition-colors duration-300 h-64">
+        <div className="w-full max-w-6xl h-[400px] p-4 mx-auto bg-white dark:bg-gray-800 rounded-lg transition-colors duration-300">
           <Line options={chartOptions} data={prepareChartData(moodData)} />
         </div>
       )}
