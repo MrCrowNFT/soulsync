@@ -14,7 +14,7 @@ dotenv.config();
 
 const FRONTEND =
   process.env.FRONTEND_URL ||
-  "https://soulsync-4k9wa52mx-mrcrownfts-projects.vercel.app";
+  "https://soulsync-git-main-mrcrownfts-projects.vercel.app";
 
 app.use(express.json());
 app.use(cookieParser());

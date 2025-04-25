@@ -5,13 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "dev": "nodemon backend/app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "babel-jest": "^29.7.0",
     "bcrypt": "^5.1.1",
     "compromise": "^14.14.4",
     "cookie-parser": "^1.4.7",
@@ -23,5 +26,9 @@
     "nodemon": "^3.1.9",
     "openai": "^4.95.1",
     "sentiment": "^5.0.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
   }
 }
