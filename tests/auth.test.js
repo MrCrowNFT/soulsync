@@ -1,12 +1,18 @@
-import { login } from "../backend/controller/auth.controller.js";
-import { User } from "../backend/models/user.model.js";
+import {
+  login,
+  refreshAccessToken,
+} from "../backend/controller/auth.controller.js";
 import RefreshToken from "../backend/models/refresh-token.model.js";
 import { generateTokens } from "../backend/helpers/auth.helpers.js";
+import { User } from "../backend/models/user.model.js";
+import { generateAccessToken } from "../backend/helpers/auth.helpers.js";
+import jwt from "jsonwebtoken";
 
 // Mock dependencies
 jest.mock("../backend/models/user.model.js");
 jest.mock("../backend/models/refresh-token.model.js");
 jest.mock("../backend/helpers/auth.helpers.js");
+jest.mock("jsonwebtoken");
 
 describe("Auth Controller - Login", () => {
   // test variables
