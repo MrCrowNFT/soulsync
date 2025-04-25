@@ -1,12 +1,12 @@
-import { login } from "../controllers/auth.controller.js";
-import { User } from "../models/user.model.js";
-import RefreshToken from "../models/refresh-token.model.js";
-import { generateTokens } from "../helpers/auth.helpers.js";
+import { login } from "../backend/controller/auth.controller.js";
+import { User } from "../backend/models/user.model.js";
+import RefreshToken from "../backend/models/refresh-token.model.js";
+import { generateTokens } from "../backend/helpers/auth.helpers.js";
 
 // Mock dependencies
-jest.mock("../models/user.model.js");
-jest.mock("../models/refresh-token.model.js");
-jest.mock("../helpers/auth.helpers.js");
+jest.mock("../backend/models/user.model.js");
+jest.mock("../backend/models/refresh-token.model.js");
+jest.mock("../backend/helpers/auth.helpers.js");
 
 describe("Auth Controller - Login", () => {
   // test variables
