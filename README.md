@@ -73,7 +73,6 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 - [ ] Dockerize backend and frontend
 - [ ] Add CI/CD pipelines (GitHub Actions or similar)
 - [ ] Add the footer links
-- [ ] Add More tests
 - [ ] Logout button
 
 ---

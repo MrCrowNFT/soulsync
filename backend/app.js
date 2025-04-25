@@ -12,16 +12,21 @@ import userRouter from "./routers/user.routes.js";
 const app = express();
 dotenv.config();
 
-const FRONTEND =
-  process.env.FRONTEND_URL ||
-  "https://soulsync-git-main-mrcrownfts-projects.vercel.app";
+//since vercel deploy different URLs, we add them all on the .env separated by ","
+const allowedOrigins = process.env.FRONTEND_URLS?.split(",") || [];
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: FRONTEND, //only accept from here where frontend is running
-    credentials: true, //need this for the cookies to work cross origin
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
 
