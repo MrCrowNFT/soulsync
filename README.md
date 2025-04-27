@@ -87,10 +87,8 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 ---
 
 ## 📷 Demo
+[SoulSync Demo](https://imgur.com/a/soulsync-demo-2CDC6wb)
 
-<p align="center">
-  <img src="https://imgur.com/a/soulsync-demo-2CDC6wb" alt="SoulSync Demo" />
-</p>
 
 ---
 
