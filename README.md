@@ -71,7 +71,7 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 - [ ] Write technical documentation
 - [ ] Add unit + integration testing with Jest
 - [ ] Dockerize backend and frontend
-- [ ] Add CI/CD pipelines (GitHub Actions or similar)
+- [ ] Add CI/CD pipelines (GitHub Actions)
 - [ ] Add the footer links
 - [ ] Logout button
 
@@ -86,9 +86,11 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ---
 
-## 📷 Demo / Screenshots
+## 📷 Demo
 
-_Coming soon: Add AI-generated homepage illustrations and demo walkthrough video links here._
+<p align="center">
+  <img src="https://imgur.com/a/soulsync-demo-2CDC6wb" alt="SoulSync Demo" />
+</p>
 
 ---
 
