@@ -86,9 +86,12 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ---
 
-## 📷 Demo
-[SoulSync Demo](https://imgur.com/a/soulsync-demo-2CDC6wb)
+### Live Project
 
+- **Frontend App:** [SoulSync Frontend (Vercel)](https://soulsync-zeta.vercel.app/)
+- **Backend API:** [SoulSync API (Render)](https://soulsync-fxrq.onrender.com)
+
+> Note: The backend is hosted on Render free tier. It may take a few seconds to wake up when idle.
 
 ---
 

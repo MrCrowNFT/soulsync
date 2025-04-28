@@ -49,7 +49,7 @@ export const login = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    //create a user object without the password for common sense reasons
+    //return a user object without the password 
     const userData = user.toObject();
     delete userData.password;
 
