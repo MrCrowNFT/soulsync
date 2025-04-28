@@ -77,7 +77,6 @@ export function SignupForm({
     setErrors({ passwordMismatch: false, requestError: null });
 
     try {
-      // Call signup method from Zustand hook
       await signup({
         username: formData.username,
         password: formData.password,
@@ -242,7 +241,7 @@ export function SignupForm({
               </div>
             </div>
 
-            {/* Photo URL Field (Optional) */}
+            {/* Photo URL Field */}
             <div className="grid gap-2">
               <Label htmlFor="photo" className="text-sm font-medium">
                 Profile Photo URL <span className="text-muted-foreground">(Optional)</span>

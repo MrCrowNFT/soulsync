@@ -18,7 +18,6 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  // Get the login method and state from the Zustand hook
   const { login, isLoading, error } = useProfile();
 
   // Local state for form inputs
@@ -31,13 +30,12 @@ export function LoginForm({
     setLocalError(null);
 
     try {
-      // Call the login method from Zustand
       await login({
         username: username,
         password: password,
       });
 
-      // Redirect on successful login
+      // Redirect to homepage on successful login
       window.location.href = "/";
     } catch (error) {
       // Handle any errors not caught by zustand

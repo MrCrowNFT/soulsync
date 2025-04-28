@@ -121,15 +121,13 @@ const MoodGraph = () => {
       setError(null);
       console.log(`Directly fetching mood data for ${period}...`);
 
-      // Make sure we're using the correct API endpoint
       const response = await api.get<MoodAPIResponse>(`/mood/${period}`);
       console.log("API response:", response);
 
-      // Extract the data from the nested structure
       // The data is in response.data.data, not directly in response.data
       const responseData = response.data.data;
 
-      // Format the data properly
+      // Format the data
       const formattedData: ChartData = {
         labels: responseData.labels || [],
         datasets: responseData.datasets || [],

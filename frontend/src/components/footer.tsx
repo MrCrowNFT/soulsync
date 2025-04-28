@@ -20,7 +20,7 @@ const Footer: React.FC<FooterProps> = ({
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Main footer content */}
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-4 lg:gap-12">
-          {/* Categories - all 4 columns */}
+          {/* Categories */}
           {footerCategories.map((category) => (
             <div key={category.title} className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
@@ -42,7 +42,7 @@ const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom row with logo, social links and copyright */}
         <div className="mt-12 pt-6 border-t border-border flex flex-col md:flex-row md:justify-between md:items-center">
-          {/* Logo and social links - now on the left */}
+          {/* Logo and social links*/}
           <div className="flex flex-col space-y-6 md:flex-row md:space-y-0 md:space-x-12 md:items-center">
             {/* Logo and company name */}
             <div className="flex items-center space-x-3">
@@ -73,7 +73,7 @@ const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Copyright - now on the right */}
+          {/* Copyright */}
           <p className="text-sm text-muted-foreground mt-6 md:mt-0">
             © {currentYear} {companyName}. All rights reserved.
           </p>

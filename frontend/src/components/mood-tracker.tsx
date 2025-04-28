@@ -12,7 +12,7 @@ const MoodTracker: React.FC<MoodTrackerProps> = ({ onMoodSubmit }) => {
   const [localLoading, setLocalLoading] = useState<boolean>(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // FIX: Use primitive selectors instead of object destructuring to prevent unnecessary re-renders
+  // Use primitive selectors instead of object destructuring to prevent unnecessary re-renders
   const newMood = useProfile((state) => state.newMood);
   const username = useProfile((state) => state.username);
   const userId = useProfile((state) => state._id);
