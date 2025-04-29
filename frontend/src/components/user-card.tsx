@@ -123,8 +123,8 @@ const UserCard: FunctionComponent = () => {
     try {
       setLoggingOut(true);
       await logout();
-      // Redirect to login page or home page after logout
-      window.location.href = "/login"; // Or use your routing system
+      // Redirect to login page
+      window.location.href = "/login"; 
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -186,7 +186,7 @@ const UserCard: FunctionComponent = () => {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="mt-4 flex items-center justify-center gap-2 w-full bg-destructive text-destructive-foreground px-4 py-2 rounded-lg hover:bg-destructive/90 transition-colors duration-300 disabled:opacity-50"
+                className="mt-4 flex items-center justify-center gap-2 w-full bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors duration-300 disabled:opacity-50"
               >
                 <LogOut size={16} />
                 {loggingOut ? "Logging out..." : "Logout"}
@@ -359,7 +359,7 @@ const UserCard: FunctionComponent = () => {
                   <button
                     onClick={handleLogout}
                     disabled={loggingOut}
-                    className="hidden md:flex items-center gap-2 bg-destructive text-destructive-foreground px-5 py-2.5 rounded-lg hover:bg-destructive/90 transition-colors duration-300 disabled:opacity-50"
+                    className="hidden md:flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-lg hover:bg-secondary/90 transition-colors duration-300 disabled:opacity-50"
                   >
                     <LogOut size={18} />
                     {loggingOut ? "Logging out..." : "Logout"}
@@ -383,7 +383,7 @@ const UserCard: FunctionComponent = () => {
                     <Mail size={16} className="text-accent" />
                     Email
                   </h3>
-                  <p className="text-lg font-semibold text-foreground pl-6">
+                  <p className="text-lg font-semibold text-foreground pl-6 break-words">
                     {email}
                   </p>
                 </div>
