@@ -10,6 +10,7 @@ import {
   Edit3,
   Save,
   X,
+  LogOut,
 } from "lucide-react";
 import { updateUserPayload } from "@/types/user";
 import { useProfile } from "@/hooks/use-profile";
@@ -27,6 +28,7 @@ const UserCard: FunctionComponent = () => {
     photo,
     updateProfile,
     isLoading,
+    logout,
   } = useProfile();
 
   const [editMode, setEditMode] = useState(false);
@@ -41,6 +43,7 @@ const UserCard: FunctionComponent = () => {
   });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [password, setPassword] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleEditMode = () => {
     // Reset form data to current profile values when entering edit mode
@@ -116,6 +119,19 @@ const UserCard: FunctionComponent = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await logout();
+      // Redirect to login page or home page after logout
+      window.location.href = "/login"; // Or use your routing system
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   const formatDate = (date: Date | undefined | null): string => {
     if (!date) return "";
     const d = new Date(date);
@@ -132,7 +148,7 @@ const UserCard: FunctionComponent = () => {
             {editMode ? (
               <div className="relative w-full h-full group">
                 <img
-                  src={defaulAvatar}
+                  src={previewImage || photo || defaulAvatar}
                   alt="user photo"
                   className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
                 />
@@ -151,7 +167,7 @@ const UserCard: FunctionComponent = () => {
               </div>
             ) : (
               <img
-                src={defaulAvatar}
+                src={photo || defaulAvatar}
                 alt="User profile"
                 className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
               />
@@ -165,6 +181,16 @@ const UserCard: FunctionComponent = () => {
                 {name} {lastName}
               </h2>
               <p className="text-sm text-muted-foreground">@{username}</p>
+
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="mt-4 flex items-center justify-center gap-2 w-full bg-destructive text-destructive-foreground px-4 py-2 rounded-lg hover:bg-destructive/90 transition-colors duration-300 disabled:opacity-50"
+              >
+                <LogOut size={16} />
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
             </div>
           )}
         </div>
@@ -319,14 +345,26 @@ const UserCard: FunctionComponent = () => {
                 <h2 className="text-2xl font-bold text-primary">
                   Profile Information
                 </h2>
-                <button
-                  type="button"
-                  onClick={handleEditMode}
-                  className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-sm transform hover:scale-[1.02]"
-                >
-                  <Edit3 size={18} />
-                  Edit Profile
-                </button>
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={handleEditMode}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-all duration-300 shadow-sm transform hover:scale-[1.02]"
+                  >
+                    <Edit3 size={18} />
+                    Edit Profile
+                  </button>
+
+                  {/* Logout Button for larger screens */}
+                  <button
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="hidden md:flex items-center gap-2 bg-destructive text-destructive-foreground px-5 py-2.5 rounded-lg hover:bg-destructive/90 transition-colors duration-300 disabled:opacity-50"
+                  >
+                    <LogOut size={18} />
+                    {loggingOut ? "Logging out..." : "Logout"}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
