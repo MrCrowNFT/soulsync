@@ -10,6 +10,10 @@ const Chat: React.FC = () => {
 
   // ref to track if already initiated the fetch
   const chatFetchedRef = useRef<boolean>(false);
+  // Ref for the chat container to enable scrolling
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  // Ref for the last message to scroll into view
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // Get profile data -> select each value individually to prevent unnecessary re-renders
   const username = useProfile((state) => state.username);
@@ -19,6 +23,19 @@ const Chat: React.FC = () => {
 
   const getChat = useProfile((state) => state.getChat);
   const newChat = useProfile((state) => state.newChat);
+
+  // Function to scroll to the bottom of the chat
+  const scrollToBottom = useCallback(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    } else if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, []);
 
   // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
@@ -31,6 +48,9 @@ const Chat: React.FC = () => {
           await getChat();
           setIsInitialized(true);
           // We don't change showMoodTracker here - it should stay visible until user interaction
+
+          // Scroll to bottom after chat is loaded
+          setTimeout(scrollToBottom, 100);
         } catch (err) {
           console.error("Failed to load chat:", err);
           setIsInitialized(true); // Still mark as initialized even if it fails -> to prevent loop
@@ -42,7 +62,12 @@ const Chat: React.FC = () => {
       // If no username, still mark as initialized to prevent future fetch attempts
       setIsInitialized(true);
     }
-  }, [username, getChat, isInitialized]);
+  }, [username, getChat, isInitialized, scrollToBottom]);
+
+  // Effect to scroll to bottom when chat messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [chat, scrollToBottom]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -52,12 +77,14 @@ const Chat: React.FC = () => {
           await newChat(input.trim());
           setInput("");
           setShowMoodTracker(false); // Hide mood tracker when user sends a message
+          // Scroll to bottom after sending a message
+          setTimeout(scrollToBottom, 100);
         } catch (err) {
           console.error("Failed to send message:", err);
         }
       }
     },
-    [input, username, newChat]
+    [input, username, newChat, scrollToBottom]
   );
 
   // Handler for when mood is submitted from MoodTracker
@@ -74,7 +101,7 @@ const Chat: React.FC = () => {
     });
   }, []);
 
-  // If user is not logged in, show a simplified interface with login prompt
+  // If user is not logged in, show a interface with login prompt
   if (!username) {
     return (
       <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
@@ -117,7 +144,10 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Messages Container */}
-      <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
+      <div
+        ref={chatContainerRef}
+        className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+      >
         {shouldShowMoodTracker && (
           <MoodTracker onMoodSubmit={handleMoodSubmitted} />
         )}
@@ -127,6 +157,7 @@ const Chat: React.FC = () => {
             chat.map((entry, index) => (
               <div
                 key={entry._id || `message-${index}`}
+                ref={index === chat.length - 1 ? lastMessageRef : null}
                 className={`flex ${
                   entry.sender === "user" ? "justify-end" : "justify-start"
                 }`}
@@ -191,6 +222,9 @@ const Chat: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* This empty div ensures we can always scroll to the bottom */}
+          <div ref={lastMessageRef} />
         </div>
       </div>
 
