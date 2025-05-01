@@ -7,12 +7,11 @@ const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
   const [showMoodTracker, setShowMoodTracker] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [initialLoadComplete, setInitialLoadComplete] =
+    useState<boolean>(false);
 
-  // ref to track if already initiated the fetch
   const chatFetchedRef = useRef<boolean>(false);
-  // Ref for the chat container to enable scrolling
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  // Ref for the last message to scroll into view
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // Get profile data -> select each value individually to prevent unnecessary re-renders
@@ -37,6 +36,7 @@ const Chat: React.FC = () => {
     }
   }, []);
 
+
   // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
     // Only execute if username exists, we haven't initialized yet, and haven't fetched chat
@@ -47,13 +47,11 @@ const Chat: React.FC = () => {
         try {
           await getChat();
           setIsInitialized(true);
-          // We don't change showMoodTracker here - it should stay visible until user interaction
-
-          // Scroll to bottom after chat is loaded
-          setTimeout(scrollToBottom, 100);
+          setInitialLoadComplete(true);
         } catch (err) {
           console.error("Failed to load chat:", err);
           setIsInitialized(true); // Still mark as initialized even if it fails -> to prevent loop
+          setInitialLoadComplete(true);
         }
       };
 
@@ -61,13 +59,27 @@ const Chat: React.FC = () => {
     } else if (!username) {
       // If no username, still mark as initialized to prevent future fetch attempts
       setIsInitialized(true);
+      setInitialLoadComplete(true);
     }
-  }, [username, getChat, isInitialized, scrollToBottom]);
+  }, [username, getChat, isInitialized]);
 
-  // Effect to scroll to bottom when chat messages change
+  // Effect to scroll to bottom when chat messages change, BUT only after initial load
+  // and only if the mood tracker is hidden
   useEffect(() => {
-    scrollToBottom();
-  }, [chat, scrollToBottom]);
+    if (initialLoadComplete && !showMoodTracker && chat.length > 0) {
+      // Add a small delay to ensure the new message is rendered
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [chat, initialLoadComplete, scrollToBottom, showMoodTracker]);
+
+  // Special effect to handle bot responses
+  useEffect(() => {
+    // When loading changes from true to false, it means a bot response has completed
+    if (!isLoading && chat.length > 0 && !showMoodTracker) {
+      // Give a bit more time for the DOM to update
+      setTimeout(scrollToBottom, 200);
+    }
+  }, [isLoading, chat.length, showMoodTracker, scrollToBottom]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -78,7 +90,7 @@ const Chat: React.FC = () => {
           setInput("");
           setShowMoodTracker(false); // Hide mood tracker when user sends a message
           // Scroll to bottom after sending a message
-          setTimeout(scrollToBottom, 100);
+          setTimeout(scrollToBottom, 200);
         } catch (err) {
           console.error("Failed to send message:", err);
         }
@@ -90,7 +102,12 @@ const Chat: React.FC = () => {
   // Handler for when mood is submitted from MoodTracker
   const handleMoodSubmitted = useCallback(() => {
     setShowMoodTracker(false);
-  }, []);
+
+    // If there are chat messages, scroll to them
+    if (chat.length > 0) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [chat.length, scrollToBottom]);
 
   const formatTime = useCallback((date: Date): string => {
     if (!date) return "";
@@ -131,7 +148,7 @@ const Chat: React.FC = () => {
     );
   }
 
-  // Show mood tracker based only on the showMoodTracker state, not depending on chat length
+  // Show mood tracker based only on the showMoodTracker state
   const shouldShowMoodTracker = showMoodTracker;
 
   return (
@@ -149,7 +166,9 @@ const Chat: React.FC = () => {
         className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700"
       >
         {shouldShowMoodTracker && (
-          <MoodTracker onMoodSubmit={handleMoodSubmitted} />
+          <div>
+            <MoodTracker onMoodSubmit={handleMoodSubmitted} />
+          </div>
         )}
 
         <div className="flex flex-col space-y-4">

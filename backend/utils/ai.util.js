@@ -1,3 +1,6 @@
+
+//todo: maybe send the last message from the same day, also as context, or maybe 5 message max, for 
+//todo: a better response 
 /**
  * Generates an AI response using the user's message and relevant memories
  * @param {string} message - The user's message
