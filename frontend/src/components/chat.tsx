@@ -7,9 +7,12 @@ const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
   const [showMoodTracker, setShowMoodTracker] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [initialLoadComplete, setInitialLoadComplete] =
+    useState<boolean>(false);
 
-  // ref to track if already initiated the fetch
   const chatFetchedRef = useRef<boolean>(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // Get profile data -> select each value individually to prevent unnecessary re-renders
   const username = useProfile((state) => state.username);
@@ -19,6 +22,20 @@ const Chat: React.FC = () => {
 
   const getChat = useProfile((state) => state.getChat);
   const newChat = useProfile((state) => state.newChat);
+
+  // Function to scroll to the bottom of the chat
+  const scrollToBottom = useCallback(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    } else if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, []);
+
 
   // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
@@ -30,10 +47,11 @@ const Chat: React.FC = () => {
         try {
           await getChat();
           setIsInitialized(true);
-          // We don't change showMoodTracker here - it should stay visible until user interaction
+          setInitialLoadComplete(true);
         } catch (err) {
           console.error("Failed to load chat:", err);
           setIsInitialized(true); // Still mark as initialized even if it fails -> to prevent loop
+          setInitialLoadComplete(true);
         }
       };
 
@@ -41,8 +59,27 @@ const Chat: React.FC = () => {
     } else if (!username) {
       // If no username, still mark as initialized to prevent future fetch attempts
       setIsInitialized(true);
+      setInitialLoadComplete(true);
     }
   }, [username, getChat, isInitialized]);
+
+  // Effect to scroll to bottom when chat messages change, BUT only after initial load
+  // and only if the mood tracker is hidden
+  useEffect(() => {
+    if (initialLoadComplete && !showMoodTracker && chat.length > 0) {
+      // Add a small delay to ensure the new message is rendered
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [chat, initialLoadComplete, scrollToBottom, showMoodTracker]);
+
+  // Special effect to handle bot responses
+  useEffect(() => {
+    // When loading changes from true to false, it means a bot response has completed
+    if (!isLoading && chat.length > 0 && !showMoodTracker) {
+      // Give a bit more time for the DOM to update
+      setTimeout(scrollToBottom, 200);
+    }
+  }, [isLoading, chat.length, showMoodTracker, scrollToBottom]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -52,18 +89,25 @@ const Chat: React.FC = () => {
           await newChat(input.trim());
           setInput("");
           setShowMoodTracker(false); // Hide mood tracker when user sends a message
+          // Scroll to bottom after sending a message
+          setTimeout(scrollToBottom, 200);
         } catch (err) {
           console.error("Failed to send message:", err);
         }
       }
     },
-    [input, username, newChat]
+    [input, username, newChat, scrollToBottom]
   );
 
   // Handler for when mood is submitted from MoodTracker
   const handleMoodSubmitted = useCallback(() => {
     setShowMoodTracker(false);
-  }, []);
+
+    // If there are chat messages, scroll to them
+    if (chat.length > 0) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [chat.length, scrollToBottom]);
 
   const formatTime = useCallback((date: Date): string => {
     if (!date) return "";
@@ -74,7 +118,7 @@ const Chat: React.FC = () => {
     });
   }, []);
 
-  // If user is not logged in, show a simplified interface with login prompt
+  // If user is not logged in, show a interface with login prompt
   if (!username) {
     return (
       <div className="mx-auto mt-5 flex w-full max-w-2xl flex-col items-center rounded-xl bg-white p-6 shadow-md transition-colors duration-300 dark:bg-gray-800">
@@ -104,7 +148,7 @@ const Chat: React.FC = () => {
     );
   }
 
-  // Show mood tracker based only on the showMoodTracker state, not depending on chat length
+  // Show mood tracker based only on the showMoodTracker state
   const shouldShowMoodTracker = showMoodTracker;
 
   return (
@@ -117,9 +161,14 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Messages Container */}
-      <div className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700">
+      <div
+        ref={chatContainerRef}
+        className="mb-6 h-[500px] w-full overflow-y-auto rounded-xl border border-blue-300 bg-gray-50 p-4 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+      >
         {shouldShowMoodTracker && (
-          <MoodTracker onMoodSubmit={handleMoodSubmitted} />
+          <div>
+            <MoodTracker onMoodSubmit={handleMoodSubmitted} />
+          </div>
         )}
 
         <div className="flex flex-col space-y-4">
@@ -127,6 +176,7 @@ const Chat: React.FC = () => {
             chat.map((entry, index) => (
               <div
                 key={entry._id || `message-${index}`}
+                ref={index === chat.length - 1 ? lastMessageRef : null}
                 className={`flex ${
                   entry.sender === "user" ? "justify-end" : "justify-start"
                 }`}
@@ -191,6 +241,9 @@ const Chat: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* This empty div ensures we can always scroll to the bottom */}
+          <div ref={lastMessageRef} />
         </div>
       </div>
 
