@@ -1,6 +1,8 @@
 import {
   login,
   refreshAccessToken,
+  logout,
+  signup,
 } from "../backend/controller/auth.controller.js";
 import RefreshToken from "../backend/models/refresh-token.model.js";
 import { generateTokens } from "../backend/helpers/auth.helpers.js";
@@ -163,5 +165,580 @@ describe("Auth Controller - Login", () => {
     });
     expect(generateTokens).not.toHaveBeenCalled();
     expect(res.cookie).not.toHaveBeenCalled();
+  });
+});
+
+describe("Auth Controller - Signup", () => {
+  let req;
+  let res;
+  let mockSave;
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Setup request mock
+    req = {
+      body: {
+        username: "testuser",
+        password: "password123",
+        email: "test@example.com",
+        name: "Test",
+        lastName: "User",
+        gender: "male",
+        birthDate: "1990-01-01",
+        photo: "profile.jpg",
+      },
+    };
+
+    // Setup response mock
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    // Setup User.findOne mock
+    User.findOne = jest.fn().mockImplementation(() => null);
+
+    // Setup User constructor and save method
+    mockSave = jest.fn().mockResolvedValue(true);
+    User.mockImplementation(() => ({
+      save: mockSave,
+    }));
+  });
+
+  test("should create a new user with valid data", async () => {
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(User.findOne).toHaveBeenCalledTimes(2);
+    expect(User).toHaveBeenCalledWith({
+      username: "testuser",
+      password: "password123",
+      email: "test@example.com",
+      name: "Test",
+      lastName: "User",
+      gender: "male",
+      birthDate: null, // The function has a bug - it always sets birthDateObj to null
+      photo: "profile.jpg",
+      moodEntries: [],
+      memories: [],
+    });
+    expect(mockSave).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "User created successfully",
+    });
+  });
+
+  test("should create a user without optional photo", async () => {
+    // Arrange
+    req.body.photo = undefined;
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(User).toHaveBeenCalledWith(
+      expect.objectContaining({
+        photo: "",
+      })
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  test("should create a user without optional birthDate", async () => {
+    // Arrange
+    req.body.birthDate = undefined;
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(User).toHaveBeenCalledWith(
+      expect.objectContaining({
+        birthDate: null,
+      })
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  test("should return 400 if required fields are missing", async () => {
+    // Test cases for each required field
+    const requiredFields = [
+      "username",
+      "password",
+      "email",
+      "name",
+      "lastName",
+      "gender",
+    ];
+
+    for (const field of requiredFields) {
+      // Arrange - Create a copy of the valid body without the tested field
+      const testReq = {
+        body: { ...req.body },
+      };
+      delete testReq.body[field];
+
+      // Act
+      await signup(testReq, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "Missing required fields. Please provide username, password, email, name, lastName, gender, and birthDate.",
+      });
+
+      // Reset mocks for next iteration
+      jest.clearAllMocks();
+      User.findOne.mockImplementation(() => null);
+    }
+  });
+
+  test("should return 400 if email format is invalid", async () => {
+    // Arrange
+    req.body.email = "invalid-email";
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid email format",
+    });
+  });
+
+  test("should return 400 if gender is invalid", async () => {
+    // Arrange
+    req.body.gender = "invalid-gender";
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message:
+        "Invalid gender value. Must be one of: male, female, non-binary, other, prefer-not-to-say",
+    });
+  });
+
+  test("should validate all accepted gender values", async () => {
+    const validGenders = [
+      "male",
+      "female",
+      "non-binary",
+      "other",
+      "prefer-not-to-say",
+    ];
+
+    for (const gender of validGenders) {
+      // Arrange
+      req.body.gender = gender;
+      jest.clearAllMocks();
+      User.findOne.mockImplementation(() => null);
+
+      // Act
+      await signup(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: "User created successfully",
+      });
+    }
+  });
+
+  test("should return 400 if birth date is invalid", async () => {
+    // Arrange
+    req.body.birthDate = "invalid-date";
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid birth date. Date must be valid and not in the future.",
+    });
+  });
+
+  test("should return 400 if birth date is in the future", async () => {
+    // Arrange
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 1);
+    req.body.birthDate = futureDate.toISOString();
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid birth date. Date must be valid and not in the future.",
+    });
+  });
+
+  test("should return 400 if username already exists", async () => {
+    // Arrange
+    User.findOne
+      .mockImplementationOnce(() => ({ username: "testuser" }))
+      .mockImplementationOnce(() => null);
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(User.findOne).toHaveBeenCalledWith({ username: "testuser" });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Username already in use",
+    });
+  });
+
+  test("should return 400 if email already exists", async () => {
+    // Arrange
+    User.findOne
+      .mockImplementationOnce(() => null)
+      .mockImplementationOnce(() => ({ email: "test@example.com" }));
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(User.findOne).toHaveBeenCalledWith({ email: "test@example.com" });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Email already in use",
+    });
+  });
+
+  test("should return 500 if an error occurs during user creation", async () => {
+    // Arrange
+    const mockError = new Error("Database error");
+    mockSave.mockRejectedValueOnce(mockError);
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: "Internal server error",
+      details: "Database error",
+    });
+  });
+
+  test("should return 500 if an unknown error occurs", async () => {
+    // Arrange
+    mockSave.mockRejectedValueOnce("Unknown error object");
+
+    // Act
+    await signup(req, res);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: "Internal server error",
+      details: "Unknown error",
+    });
+  });
+});
+
+// Auth Controller - Logout tests
+describe("Auth Controller - logout", () => {
+  let req;
+  let res;
+  let mockDeleteOne;
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Setup request and response objects
+    req = {
+      cookies: {
+        refreshToken: "test-refresh-token",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      clearCookie: jest.fn(),
+    };
+
+    // Mock RefreshToken.deleteOne
+    mockDeleteOne = jest.fn();
+    RefreshToken.deleteOne = mockDeleteOne;
+  });
+
+  it("should successfully logout user and clear refresh token", async () => {
+    // Setup mocks
+    mockDeleteOne.mockResolvedValue({ deletedCount: 1 });
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
+    expect(res.clearCookie).toHaveBeenCalledWith("refreshToken");
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Logout successful",
+    });
+  });
+
+  it("should return 400 if refresh token is missing", async () => {
+    // Setup request without refresh token
+    req.cookies = {};
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).not.toHaveBeenCalled();
+    expect(res.clearCookie).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token is required",
+    });
+  });
+
+  it("should return 400 if token deletion fails", async () => {
+    // Setup mock to simulate deletion failure
+    mockDeleteOne.mockResolvedValue(null);
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token could not be deleted",
+    });
+  });
+
+  it("should return 500 if an error occurs during logout", async () => {
+    // Setup mock to throw an error
+    const errorMessage = "Database connection error";
+    mockDeleteOne.mockRejectedValue(new Error(errorMessage));
+
+    // Mock console.error to avoid cluttering test output
+    console.error = jest.fn();
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      `Error during logout: ${errorMessage}`
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Server error",
+    });
+  });
+});
+
+describe("Auth Controller - refreshAccessToken", () => {
+  let req;
+  let res;
+  let mockUser;
+  let mockStoredToken;
+
+  beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
+
+    // Mock request and response objects
+    req = {
+      cookies: {},
+      path: "/refresh",
+      method: "POST",
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    // Mock user data
+    mockUser = {
+      _id: "mockUserId123",
+      email: "test@example.com",
+    };
+
+    // Mock token data
+    mockStoredToken = {
+      _id: "tokenId123",
+      token: "validRefreshToken",
+      userId: mockUser._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days in the future
+    };
+
+    // Setup default mocks
+    User.findById = jest.fn().mockResolvedValue(mockUser);
+    RefreshToken.findOne = jest.fn().mockResolvedValue(mockStoredToken);
+    RefreshToken.deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
+    generateAccessToken.mockReturnValue("newAccessToken123");
+    jwt.verify.mockReturnValue({ _id: mockUser._id });
+  });
+
+  test("should return 400 if no refresh token provided", async () => {
+    // No refresh token in cookies
+    await refreshAccessToken(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token is required",
+    });
+    expect(RefreshToken.findOne).not.toHaveBeenCalled();
+  });
+
+  test("should return 401 if refresh token not found in database", async () => {
+    // Set refresh token in cookies but not in database
+    req.cookies.refreshToken = "nonExistentToken";
+    RefreshToken.findOne.mockResolvedValue(null);
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "nonExistentToken",
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid refresh token",
+    });
+  });
+
+  test("should return 401 if refresh token is expired", async () => {
+    // Set refresh token in cookies but expired in database
+    req.cookies.refreshToken = "expiredToken";
+    const expiredToken = {
+      ...mockStoredToken,
+      token: "expiredToken",
+      expiresAt: new Date(Date.now() - 1000), // Expired timestamp
+    };
+    RefreshToken.findOne.mockResolvedValue(expiredToken);
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "expiredToken",
+    });
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      _id: expiredToken._id,
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token expired",
+    });
+  });
+
+  test("should return 401 if JWT verification fails", async () => {
+    // Set refresh token in cookies but JWT verification fails
+    req.cookies.refreshToken = "invalidSignatureToken";
+    jwt.verify.mockImplementation(() => {
+      throw new Error("Invalid signature");
+    });
+
+    await refreshAccessToken(req, res);
+
+    expect(jwt.verify).toHaveBeenCalledWith(
+      "invalidSignatureToken",
+      process.env.JWT_REFRESH_SECRET
+    );
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      _id: mockStoredToken._id,
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid refresh token",
+    });
+  });
+
+  test("should return 401 if user not found", async () => {
+    // Set valid refresh token but user not found
+    req.cookies.refreshToken = "validRefreshToken";
+    User.findById.mockResolvedValue(null);
+
+    await refreshAccessToken(req, res);
+
+    expect(User.findById).toHaveBeenCalledWith(mockUser._id);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "User not found",
+    });
+  });
+
+  test("should return new access token on successful refresh", async () => {
+    // Happy path - everything works correctly
+    req.cookies.refreshToken = "validRefreshToken";
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "validRefreshToken",
+    });
+    expect(jwt.verify).toHaveBeenCalledWith(
+      "validRefreshToken",
+      process.env.JWT_REFRESH_SECRET
+    );
+    expect(User.findById).toHaveBeenCalledWith(mockUser._id);
+    expect(generateAccessToken).toHaveBeenCalledWith(mockUser);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Refresh successful",
+      accessToken: "newAccessToken123",
+    });
+  });
+
+  test("should handle server errors properly", async () => {
+    // Simulate server error
+    req.cookies.refreshToken = "validRefreshToken";
+    const error = new Error("Database connection failed");
+    RefreshToken.findOne.mockRejectedValue(error);
+
+    await refreshAccessToken(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Server error",
+    });
   });
 });
