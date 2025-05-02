@@ -532,14 +532,16 @@ describe("Auth Controller - logout", () => {
     await logout(req, res);
 
     // Assertions
-    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({ token: "test-refresh-token" });
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       message: "Refresh token could not be deleted",
     });
   });
-  
+
   it("should return 500 if an error occurs during logout", async () => {
     // Setup mock to throw an error
     const errorMessage = "Database connection error";
@@ -558,6 +560,181 @@ describe("Auth Controller - logout", () => {
     expect(console.error).toHaveBeenCalledWith(
       `Error during logout: ${errorMessage}`
     );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Server error",
+    });
+  });
+});
+
+describe("Auth Controller - refreshAccessToken", () => {
+  let req;
+  let res;
+  let mockUser;
+  let mockStoredToken;
+
+  beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
+
+    // Mock request and response objects
+    req = {
+      cookies: {},
+      path: "/refresh",
+      method: "POST",
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    // Mock user data
+    mockUser = {
+      _id: "mockUserId123",
+      email: "test@example.com",
+    };
+
+    // Mock token data
+    mockStoredToken = {
+      _id: "tokenId123",
+      token: "validRefreshToken",
+      userId: mockUser._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days in the future
+    };
+
+    // Setup default mocks
+    User.findById = jest.fn().mockResolvedValue(mockUser);
+    RefreshToken.findOne = jest.fn().mockResolvedValue(mockStoredToken);
+    RefreshToken.deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
+    generateAccessToken.mockReturnValue("newAccessToken123");
+    jwt.verify.mockReturnValue({ _id: mockUser._id });
+  });
+
+  test("should return 400 if no refresh token provided", async () => {
+    // No refresh token in cookies
+    await refreshAccessToken(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token is required",
+    });
+    expect(RefreshToken.findOne).not.toHaveBeenCalled();
+  });
+
+  test("should return 401 if refresh token not found in database", async () => {
+    // Set refresh token in cookies but not in database
+    req.cookies.refreshToken = "nonExistentToken";
+    RefreshToken.findOne.mockResolvedValue(null);
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "nonExistentToken",
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid refresh token",
+    });
+  });
+
+  test("should return 401 if refresh token is expired", async () => {
+    // Set refresh token in cookies but expired in database
+    req.cookies.refreshToken = "expiredToken";
+    const expiredToken = {
+      ...mockStoredToken,
+      token: "expiredToken",
+      expiresAt: new Date(Date.now() - 1000), // Expired timestamp
+    };
+    RefreshToken.findOne.mockResolvedValue(expiredToken);
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "expiredToken",
+    });
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      _id: expiredToken._id,
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token expired",
+    });
+  });
+
+  test("should return 401 if JWT verification fails", async () => {
+    // Set refresh token in cookies but JWT verification fails
+    req.cookies.refreshToken = "invalidSignatureToken";
+    jwt.verify.mockImplementation(() => {
+      throw new Error("Invalid signature");
+    });
+
+    await refreshAccessToken(req, res);
+
+    expect(jwt.verify).toHaveBeenCalledWith(
+      "invalidSignatureToken",
+      process.env.JWT_REFRESH_SECRET
+    );
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      _id: mockStoredToken._id,
+    });
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid refresh token",
+    });
+  });
+
+  test("should return 401 if user not found", async () => {
+    // Set valid refresh token but user not found
+    req.cookies.refreshToken = "validRefreshToken";
+    User.findById.mockResolvedValue(null);
+
+    await refreshAccessToken(req, res);
+
+    expect(User.findById).toHaveBeenCalledWith(mockUser._id);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "User not found",
+    });
+  });
+
+  test("should return new access token on successful refresh", async () => {
+    // Happy path - everything works correctly
+    req.cookies.refreshToken = "validRefreshToken";
+
+    await refreshAccessToken(req, res);
+
+    expect(RefreshToken.findOne).toHaveBeenCalledWith({
+      token: "validRefreshToken",
+    });
+    expect(jwt.verify).toHaveBeenCalledWith(
+      "validRefreshToken",
+      process.env.JWT_REFRESH_SECRET
+    );
+    expect(User.findById).toHaveBeenCalledWith(mockUser._id);
+    expect(generateAccessToken).toHaveBeenCalledWith(mockUser);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Refresh successful",
+      accessToken: "newAccessToken123",
+    });
+  });
+
+  test("should handle server errors properly", async () => {
+    // Simulate server error
+    req.cookies.refreshToken = "validRefreshToken";
+    const error = new Error("Database connection failed");
+    RefreshToken.findOne.mockRejectedValue(error);
+
+    await refreshAccessToken(req, res);
+
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
       success: false,
