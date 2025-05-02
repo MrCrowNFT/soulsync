@@ -1,6 +1,7 @@
 import {
   login,
   refreshAccessToken,
+  logout,
   signup,
 } from "../backend/controller/auth.controller.js";
 import RefreshToken from "../backend/models/refresh-token.model.js";
@@ -209,7 +210,7 @@ describe("Auth Controller - Signup", () => {
   test("should create a new user with valid data", async () => {
     // Act
     await signup(req, res);
-    
+
     // Assert
     expect(User.findOne).toHaveBeenCalledTimes(2);
     expect(User).toHaveBeenCalledWith({
@@ -222,13 +223,13 @@ describe("Auth Controller - Signup", () => {
       birthDate: null, // The function has a bug - it always sets birthDateObj to null
       photo: "profile.jpg",
       moodEntries: [],
-      memories: []
+      memories: [],
     });
     expect(mockSave).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      message: "User created successfully"
+      message: "User created successfully",
     });
   });
 
@@ -455,6 +456,112 @@ describe("Auth Controller - Signup", () => {
       success: false,
       error: "Internal server error",
       details: "Unknown error",
+    });
+  });
+});
+
+// Auth Controller - Logout tests
+describe("Auth Controller - logout", () => {
+  let req;
+  let res;
+  let mockDeleteOne;
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Setup request and response objects
+    req = {
+      cookies: {
+        refreshToken: "test-refresh-token",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      clearCookie: jest.fn(),
+    };
+
+    // Mock RefreshToken.deleteOne
+    mockDeleteOne = jest.fn();
+    RefreshToken.deleteOne = mockDeleteOne;
+  });
+
+  it("should successfully logout user and clear refresh token", async () => {
+    // Setup mocks
+    mockDeleteOne.mockResolvedValue({ deletedCount: 1 });
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
+    expect(res.clearCookie).toHaveBeenCalledWith("refreshToken");
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Logout successful",
+    });
+  });
+
+  it("should return 400 if refresh token is missing", async () => {
+    // Setup request without refresh token
+    req.cookies = {};
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).not.toHaveBeenCalled();
+    expect(res.clearCookie).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token is required",
+    });
+  });
+
+  it("should return 400 if token deletion fails", async () => {
+    // Setup mock to simulate deletion failure
+    mockDeleteOne.mockResolvedValue(null);
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({ token: "test-refresh-token" });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Refresh token could not be deleted",
+    });
+  });
+  
+  it("should return 500 if an error occurs during logout", async () => {
+    // Setup mock to throw an error
+    const errorMessage = "Database connection error";
+    mockDeleteOne.mockRejectedValue(new Error(errorMessage));
+
+    // Mock console.error to avoid cluttering test output
+    console.error = jest.fn();
+
+    // Call the function
+    await logout(req, res);
+
+    // Assertions
+    expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
+      token: "test-refresh-token",
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      `Error during logout: ${errorMessage}`
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Server error",
     });
   });
 });
