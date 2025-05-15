@@ -56,16 +56,17 @@ const Dashboard = () => {
 
   // Show dashboard content if authenticated
   return (
-    <div className="container mx-auto px-4 py-8">
-  <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
-    Your Dashboard
-  </h1>
-  <UserCard />
-  <div className="mt-8 w-full max-w-6xl mx-auto h-[400px]">
-    <MoodGraph />
-  </div>
-</div>
-
+    <div className="container mx-auto px-4 py-8 mb-24">
+      <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
+        Your Dashboard
+      </h1>
+      <UserCard />
+      <div className="mt-8 mb-16 w-full max-w-6xl mx-auto">
+        <div className="h-96">
+          <MoodGraph />
+        </div>
+      </div>
+    </div>
   );
 };
 
