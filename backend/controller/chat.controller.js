@@ -7,7 +7,7 @@ import {
 } from "../utils/memory.util.js";
 
 const CHAT_ENTRY_LIMIT = 100;
-
+const CONVERSATION_CONTEXT_LIMIT = 5;
 //**We don't need a chat entry update method
 /**
  * Get the chat entries when the user loads the chat
