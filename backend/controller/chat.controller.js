@@ -7,7 +7,7 @@ import {
 } from "../utils/memory.util.js";
 
 const CHAT_ENTRY_LIMIT = 100;
-
+const CONVERSATION_CONTEXT_LIMIT = 5;
 //**We don't need a chat entry update method
 /**
  * Get the chat entries when the user loads the chat
@@ -159,9 +159,20 @@ export const newChatEntry = async (req, res) => {
     const relatedMemories = await fetchRelevantMemories(userId, message);
     console.log(`Related memories found: ${relatedMemories.length}`);
 
+    console.log(`Fetching recent chat history for conversational context...`);
+    const recentChatEntries = await ChatEntry.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(CONVERSATION_CONTEXT_LIMIT)
+      .lean();
+    
+    console.log(`Found ${recentChatEntries.length} recent chat entries for context`);
+    
+    // Reverse to chronological order for proper conversation flow
+    const orderedChatEntries = recentChatEntries.reverse();
+
     console.log(`Sending message to LLM`);
-    //todo need to add and send info about the user
-    const aiMessage = await getLLMResponse(message, relatedMemories);
+    
+    const aiMessage = await getLLMResponse(message, relatedMemories, orderedChatEntries);
     console.log(
       `LLM response received. Response length: ${aiMessage.length} characters`
     );

@@ -1,16 +1,19 @@
-
-//todo: maybe send the last message from the same day, also as context, or maybe 5 message max, for 
-//todo: a better response 
 /**
  * Generates an AI response using the user's message and relevant memories
  * @param {string} message - The user's message
  * @param {Array} memories - Array of relevant memory objects
+ * @param {Array} recentChatEntries - Array of recent chat entries to improve conversational response 
  * @returns {Promise<string>} - The AI's response
  */
-export const getLLMResponse = async (message, memories) => {
+export const getLLMResponse = async (
+  message,
+  memories,
+  recentChatEntries = []
+) => {
   console.log("------ LLM RESPONSE GENERATION STARTED ------");
   console.log(`Input message: "${message}"`);
   console.log(`Memories provided: ${memories.length}`);
+  console.log(`Recent chat entries provided: ${recentChatEntries.length}`);
 
   try {
     if (!message || typeof message !== "string") {
@@ -101,6 +104,22 @@ export const getLLMResponse = async (message, memories) => {
       messages.push({
         role: "assistant",
         content: `I'll remember these things about you:\n\n${memoryContext}`,
+      });
+    }
+
+    // Add recent conversation history as context (up to 5 messages max)
+    if (recentChatEntries.length > 0) {
+      console.log(
+        `Adding ${recentChatEntries.length} recent chat entries to context`
+      );
+
+      // Format each chat entry into the appropriate role and content
+      recentChatEntries.forEach((entry) => {
+        const role = entry.sender === "user" ? "user" : "assistant";
+        messages.push({
+          role: role,
+          content: entry.message,
+        });
       });
     }
 

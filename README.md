@@ -69,11 +69,10 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 ## TODO
 
 - [ ] Write technical documentation
-- [ ] Add unit + integration testing with Jest
+- [ ] Add more unit + integration testing with Jest
 - [ ] Dockerize backend and frontend
-- [ ] Add CI/CD pipelines (GitHub Actions)
 - [ ] Add the footer links
-- [ ] Logout button
+- [ ] Better Logs
 
 ---
 
