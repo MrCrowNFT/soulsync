@@ -8,6 +8,7 @@ import moodEntryRouter from "./routers/mood-entry.routes.js";
 import { authenticate } from "./middleware/auth.js";
 import chatEntryRouter from "./routers/chat-entry.routes.js";
 import userRouter from "./routers/user.routes.js";
+import assesmentRouter from "./routers/assesment.routes.js";
 
 const app = express();
 dotenv.config();
@@ -34,6 +35,7 @@ app.use("/auth", authRouter);
 app.use("/mood", authenticate, moodEntryRouter);
 app.use("/chat", authenticate, chatEntryRouter);
 app.use("/user", authenticate, userRouter);
+app.use("/assessment", authenticate, assesmentRouter);
 
 const PORT = process.env.PORT;
 
