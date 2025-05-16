@@ -1,7 +1,3 @@
-/**
- * AI utility for generating mental health assessments based on mood entries and memories
- */
-
 import { OpenAI } from "openai";
 
 /**
@@ -29,10 +25,10 @@ export const getAssessment = async (
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Prepare memory contents for context
+    // prepare memory contents for context
     const memoryContents = memories
       .map((memory, index) => {
-        // Include the date and memory content
+        // include the date and memory content
         const date = new Date(memory.createdAt).toLocaleDateString();
         return `Memory ${index + 1} (${date}): ${memory.memory}`;
       })
@@ -40,7 +36,7 @@ export const getAssessment = async (
 
     console.log("Memory context prepared");
 
-    // Prepare mood entry data for context
+    // prepare mood entry data for context
     const moodData = moodEntries
       .map((entry) => {
         const date = new Date(entry.createdAt).toLocaleDateString();
@@ -50,7 +46,7 @@ export const getAssessment = async (
 
     console.log("Mood data prepared");
 
-    // Extract personality traits, emotions, and topics for additional context
+    // extract personality traits, emotions, and topics from memories for additional context
     const allPersonality = [
       ...new Set(memories.flatMap((m) => m.personality || [])),
     ];

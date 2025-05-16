@@ -13,7 +13,7 @@ export const getUserAssessment = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Get all mood entries from the last 7 days
+    // get all mood entries from last 7 days
     const recentMoodEntries = await MoodEntry.find({
       userId: userId,
       createdAt: {
@@ -21,15 +21,15 @@ export const getUserAssessment = async (req, res) => {
       },
     }).sort({ createdAt: -1 }); // Sort by most recent first
 
-    // Get all memories from the last 7 days
+    // get all memories from last 7 days
     const recentMemories = await Memory.find({
       userId: userId,
       createdAt: {
         $gte: new Date(new Date().setDate(new Date().getDate() - 7)),
       },
-    }).sort({ createdAt: -1 }); // Sort by most recent first
+    }).sort({ createdAt: -1 }); // most recent first
 
-    // Check if we have enough data for a meaningful assessment
+    // Check if enough data for a meaningful assessment ->if not just cancel it
     if (recentMoodEntries.length < 3 || recentMemories.length < 2) {
       return res.status(400).json({
         success: false,
@@ -44,14 +44,14 @@ export const getUserAssessment = async (req, res) => {
       });
     }
 
-    // Calculate average mood
+    // average mood
     const moodSum = recentMoodEntries.reduce(
       (sum, entry) => sum + entry.mood,
       0
     );
     const moodAverage = moodSum / recentMoodEntries.length;
 
-    // Get mood trend (increasing, decreasing, or stable)
+    // determine mood trend (increasing, decreasing, or stable)
     let moodTrend = "stable";
     if (recentMoodEntries.length >= 3) {
       const firstHalf = recentMoodEntries.slice(
@@ -77,7 +77,7 @@ export const getUserAssessment = async (req, res) => {
       }
     }
 
-    // Get assessment from AI
+    // get ai assessment
     const assessment = await getAssessment(
       recentMoodEntries,
       recentMemories,
