@@ -12,11 +12,10 @@ import mongoose from "mongoose";
 export const getUserAssessment = async (req, res) => {
   try {
     const userId = req.user._id;
-    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     // Get all mood entries from the last 7 days
     const recentMoodEntries = await MoodEntry.find({
-      userId: userObjectId,
+      userId: userId,
       createdAt: {
         $gte: new Date(new Date().setDate(new Date().getDate() - 7)),
       },
@@ -24,7 +23,7 @@ export const getUserAssessment = async (req, res) => {
 
     // Get all memories from the last 7 days
     const recentMemories = await Memory.find({
-      userId: userObjectId,
+      userId: userId,
       createdAt: {
         $gte: new Date(new Date().setDate(new Date().getDate() - 7)),
       },
