@@ -1,13 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { Assessment as AssessmentType } from "@/types";
 import { getAssesment } from "@/api/services";
-import {
-  ArrowUpRight,
-  RefreshCw,
-  TrendingDown,
-  TrendingUp,
-  Minus,
-} from "lucide-react";
+import { ArrowUpRight, RefreshCw, TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 const Assessment: FunctionComponent = () => {
   const [assessment, setAssessment] = useState<AssessmentType | null>(null);
@@ -34,7 +28,7 @@ const Assessment: FunctionComponent = () => {
   // Function to render trend icon
   const renderTrendIcon = () => {
     if (!assessment) return <Minus size={20} />;
-
+    
     switch (assessment.moodTrend) {
       case "improving":
         return <TrendingUp size={20} className="text-emerald-500" />;
@@ -48,7 +42,7 @@ const Assessment: FunctionComponent = () => {
   // Function to map mood average to color
   const getMoodColor = () => {
     if (!assessment) return "bg-gray-200 dark:bg-gray-700";
-
+    
     if (assessment.moodAverage >= 4) {
       return "bg-emerald-500";
     } else if (assessment.moodAverage >= 3) {
@@ -61,13 +55,13 @@ const Assessment: FunctionComponent = () => {
   };
 
   return (
-    <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-sm mx-auto p-6 transition-colors duration-300">
+    <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
       {/* Title */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-outfit font-semibold text-gray-900 dark:text-gray-100">
           AI Assessment
         </h2>
-        <button
+        <button 
           onClick={fetchAssessment}
           disabled={loading}
           className="text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors duration-300"
@@ -78,9 +72,7 @@ const Assessment: FunctionComponent = () => {
 
       {loading && (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-pulse text-gray-500 dark:text-gray-400">
-            Loading assessment...
-          </div>
+          <div className="animate-pulse text-gray-500 dark:text-gray-400">Loading assessment...</div>
         </div>
       )}
 
@@ -96,40 +88,26 @@ const Assessment: FunctionComponent = () => {
           <div className="grid grid-cols-3 gap-4 mb-6">
             {/* Mood Average */}
             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Mood Average
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Mood Average</div>
               <div className="flex items-center">
-                <div
-                  className={`w-3 h-3 rounded-full mr-2 ${getMoodColor()}`}
-                ></div>
-                <span className="text-lg font-semibold">
-                  {assessment.moodAverage.toFixed(1)}
-                </span>
+                <div className={`w-3 h-3 rounded-full mr-2 ${getMoodColor()}`}></div>
+                <span className="text-lg font-semibold">{assessment.moodAverage.toFixed(1)}</span>
               </div>
             </div>
-
+            
             {/* Mood Trend */}
             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Trend
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Trend</div>
               <div className="flex items-center">
                 {renderTrendIcon()}
-                <span className="text-lg font-semibold ml-2 capitalize">
-                  {assessment.moodTrend}
-                </span>
+                <span className="text-lg font-semibold ml-2 capitalize">{assessment.moodTrend}</span>
               </div>
             </div>
-
+            
             {/* Timeframe */}
             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Timeframe
-              </div>
-              <div className="text-lg font-semibold">
-                {assessment.timeframe}
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Timeframe</div>
+              <div className="text-lg font-semibold">{assessment.timeframe}</div>
             </div>
           </div>
 
