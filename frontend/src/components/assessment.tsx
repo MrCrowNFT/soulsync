@@ -1,39 +1,25 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useState } from "react";
 import { Assessment as AssessmentType } from "@/types";
-import { getAssesment } from "../axios";
+import { getAssesment } from "@/api/services";
 
 const Assessment: FunctionComponent = () => {
   const [assessment, setAssessment] = useState<AssessmentType | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAssessment = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getAssesment();
       setAssessment(data);
     } catch (err) {
-      console.error("Failed to load assessment:", err);
+      setError("Failed to load assessment. Please try again.");
+      console.error("Assessment error:", err);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAssessment();
-  }, []);
-
-  // Format the current date for display
-  const formattedTimestamp = new Date().toLocaleString();
-
-  if (loading) {
-    return (
-      <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300 flex items-center justify-center">
-        <div className="text-gray-500 dark:text-gray-400">
-          Loading assessment...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
@@ -42,60 +28,48 @@ const Assessment: FunctionComponent = () => {
         AI Assessment
       </h2>
 
-      {assessment && (
-        <>
-          {/* Timeframe */}
-          <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Analysis period:{" "}
-            <span className="font-semibold">{assessment.timeframe}</span>
+      {/* Assessment content or placeholder */}
+      <div className="mb-6">
+        {loading ? (
+          <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+            Loading your assessment...
           </div>
-
-          {/* Mood Stats */}
-          <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Average Mood
-                </p>
-                <p className="text-lg font-semibold">
-                  {assessment.moodAverage.toFixed(1)}/5
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Trend
-                </p>
-                <p className="text-lg font-semibold capitalize">
-                  {assessment.moodTrend}
-                </p>
-              </div>
+        ) : assessment ? (
+          <>
+            {/* Assessment Text */}
+            <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800/30 rounded-lg p-4">
+              <p className="text-gray-700 dark:text-gray-300 font-mono">
+                <i>
+                  {assessment.assessment ||
+                    "Not enough data for assessment. Please track your mood and add memories for at least 3 days."}
+                </i>
+              </p>
             </div>
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Based on {assessment.moodEntriesCount} entries •{" "}
-              {assessment.memoriesCount} memories
-            </div>
-          </div>
-
-          {/* Assessment Text */}
-          <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800/30 rounded-lg p-4 mb-6">
-            <p className="text-gray-700 dark:text-gray-300 font-mono">
-              {assessment.assessment}
+          </>
+        ) : (
+          <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+            <p>
+              <i>
+                Click the button below to get an AI assessment of your mood and
+                recent behaviour.
+              </i>
             </p>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      {/* Button and Timestamp */}
-      <div className="flex justify-between items-center mt-auto">
+      {/* Error message */}
+      {error && <div className="mb-4 text-red-500 text-center">{error}</div>}
+
+      {/* Button at bottom right */}
+      <div className="flex justify-end">
         <button
           onClick={fetchAssessment}
-          className="bg-blue-500 dark:bg-blue-600 font-mono text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300"
+          disabled={loading}
+          className="bg-blue-500 dark:bg-blue-600 font-mono text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50"
         >
-          New Assessment
+          {loading ? "Loading..." : "New Assessment"}
         </button>
-        <p className="italic text-sm text-gray-500 dark:text-gray-400">
-          {formattedTimestamp}
-        </p>
       </div>
     </div>
   );
