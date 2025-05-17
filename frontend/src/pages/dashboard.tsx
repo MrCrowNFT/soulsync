@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import MoodGraph from "@/components/mood-graph";
 import UserCard from "@/components/user-card";
 import { useProfile } from "@/hooks/use-profile";
+import Assessment from "@/components/assessment";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -61,9 +62,19 @@ const Dashboard = () => {
         Your Dashboard
       </h1>
       <UserCard />
+
+      {/* Mood Graph and Assessment Section */}
       <div className="mt-8 mb-16 w-full max-w-6xl mx-auto">
-        <div className="h-96">
-          <MoodGraph />
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mood Graph */}
+          <div className="w-full lg:w-2/3 h-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <MoodGraph />
+          </div>
+
+          {/* Assessment  */}
+          <div className="w-full lg:w-1/3">
+            <Assessment />
+          </div>
         </div>
       </div>
     </div>
