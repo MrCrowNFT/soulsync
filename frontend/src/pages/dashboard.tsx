@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import MoodGraph from "@/components/mood-graph";
 import UserCard from "@/components/user-card";
 import { useProfile } from "@/hooks/use-profile";
+import Assessment from "@/components/assessment";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -56,16 +57,27 @@ const Dashboard = () => {
 
   // Show dashboard content if authenticated
   return (
-    <div className="container mx-auto px-4 py-8">
-  <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
-    Your Dashboard
-  </h1>
-  <UserCard />
-  <div className="mt-8 w-full max-w-6xl mx-auto h-[400px]">
-    <MoodGraph />
-  </div>
-</div>
+    <div className="container mx-auto px-4 py-8 mb-24">
+      <h1 className="mb-8 text-2xl font-bold text-gray-800 dark:text-white">
+        Your Dashboard
+      </h1>
+      <UserCard />
 
+      {/* Mood Graph and Assessment Section */}
+      <div className="mt-8 mb-16 w-full max-w-6xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mood Graph */}
+          <div className="w-full lg:w-2/3 h-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <MoodGraph />
+          </div>
+
+          {/* Assessment  */}
+          <div className="w-full lg:w-1/3">
+            <Assessment />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -78,10 +78,11 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ## Future Updates
 
-- File uploads (cloud storage support)
+- File uploads (cloud storage support AWS S3)
 - AI-powered user assessments
 - RAG (Retrieval-Augmented Generation) for more informed responses
 - Panic mode: If user presses an alert button, chat sends a specialized prompt to LLM for immediate support response
+- Conversation stater: let the ai ask you first
 
 ---
 
