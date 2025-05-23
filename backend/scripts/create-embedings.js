@@ -1,5 +1,5 @@
 // Usage: node scripts/embed-books.js
-// Description: Extracts text from PDFs and stores vector embeddings in MongoDB Atlas
+// Extracts text from PDFs and stores vector embeddings in MongoDB Atlas
 
 import fs from "fs";
 import pdf from "pdf-parse";
