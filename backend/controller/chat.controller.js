@@ -134,7 +134,7 @@ export const newChatEntry = async (req, res) => {
 
     console.log(`Generating message embeddings`);
 
-    const embedding = getEmbedding(message);
+    const embedding = await getEmbedding(message);
 
     const newChatEntry = new ChatEntry({
       userId: userId,
@@ -181,7 +181,7 @@ export const newChatEntry = async (req, res) => {
     const orderedChatEntries = recentChatEntries.reverse();
 
     console.log(`Getting RAG context`);
-    const ragContext = getRAGContext(embedding);
+    const ragContext = await getRAGContext(embedding);
 
     console.log(`Sending message to LLM`);
 

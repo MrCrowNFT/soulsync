@@ -2,18 +2,24 @@
  * Generates an AI response using the user's message and relevant memories
  * @param {string} message - The user's message
  * @param {Array} memories - Array of relevant memory objects
- * @param {Array} recentChatEntries - Array of recent chat entries to improve conversational response 
+ * @param {Array} recentChatEntries - Array of recent chat entries to improve conversational response
+ * @param {Object} ragContext - RAG context object with relevant knowledge base content
  * @returns {Promise<string>} - The AI's response
  */
 export const getLLMResponse = async (
   message,
   memories,
-  recentChatEntries = []
+  recentChatEntries = [],
+  ragContext
 ) => {
   console.log("------ LLM RESPONSE GENERATION STARTED ------");
   console.log(`Input message: "${message}"`);
   console.log(`Memories provided: ${memories.length}`);
   console.log(`Recent chat entries provided: ${recentChatEntries.length}`);
+  console.log(`RAG context provided: ${ragContext?.context ? "Yes" : "No"}`);
+  if (ragContext?.context) {
+    console.log(`RAG context length: ${ragContext.context.length} characters`);
+  }
 
   try {
     if (!message || typeof message !== "string") {
@@ -77,8 +83,8 @@ export const getLLMResponse = async (
 
     console.log(`Selected personality traits: ${personalityTraits || "none"}`);
 
-    // Build a clear system prompt with better context separation
-    const systemPrompt = `
+    // Build a clear system prompt with RAG knowledge integration
+    let systemPrompt = `
       You are a supportive, conversational mental health companion. Keep responses brief, genuine and human-like.
       Never use corporate or robotic language. Respond in 1-3 sentences as a supportive friend would.
 
@@ -95,6 +101,19 @@ export const getLLMResponse = async (
       Be concise, warm, and conversational. Use natural, casual language. Match the user's tone and energy level.
       Keep responses short even when the input is short.
     `.trim();
+
+    // Add RAG context to system prompt if available
+    if (ragContext?.context && ragContext.context.trim()) {
+      console.log("Adding RAG knowledge base context to system prompt");
+      systemPrompt += `\n\n--- KNOWLEDGE BASE CONTEXT ---
+The following information from mental health resources may be relevant to the user's question.
+Use this information to inform your response, but don't quote it directly or mention "according to sources".
+Integrate the knowledge naturally into your conversational response.
+
+${ragContext.context}
+
+Remember: Keep your response conversational and brief, even with this additional context.`;
+    }
 
     // Prepare messages with clear separation of user message and memory context
     const messages = [{ role: "system", content: systemPrompt }];
