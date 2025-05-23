@@ -52,6 +52,7 @@ async function run() {
   ];
 
   const client = new MongoClient(process.env.MONGO_URI);
+  const BATCH_SIZE = 10; // Process 10 chunks at a time
 
   try {
     await client.connect();
@@ -64,12 +65,59 @@ async function run() {
 
       console.log(`Processing ${path} with ${chunks.length} chunks...`);
 
-      for (const chunk of chunks) {
-        const exists = await collection.findOne({ text: chunk });
-        if (!exists) {
-          const embedding = await getEmbedding(chunk);
-          await collection.insertOne({ text: chunk, embedding });
+      // REPLACE THE OLD LOOP WITH BATCH PROCESSING
+      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        const batch = chunks.slice(i, i + BATCH_SIZE);
+        console.log(
+          `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
+            chunks.length / BATCH_SIZE
+          )}`
+        );
+
+        // Filter out chunks that already exist
+        const newChunks = [];
+
+        for (const chunk of batch) {
+          const exists = await collection.findOne({ text: chunk });
+          if (!exists) {
+            newChunks.push(chunk);
+            chunkTexts.push(chunk);
+          }
         }
+
+        if (newChunks.length === 0) {
+          console.log(
+            `Batch ${
+              Math.floor(i / BATCH_SIZE) + 1
+            }: All chunks already exist, skipping...`
+          );
+          continue;
+        }
+
+        // Generate embeddings for all new chunks in parallel
+        console.log(`Generating ${newChunks.length} embeddings...`);
+        const embeddings = await Promise.all(
+          newChunks.map((chunk) => getEmbedding(chunk))
+        );
+
+        // Prepare documents for insertion
+        const documents = newChunks.map((chunk, index) => ({
+          text: chunk,
+          embedding: embeddings[index],
+          source: path.split("/").pop(), // filename
+          chunkIndex: i + index,
+          createdAt: new Date(),
+          wordCount: chunk.split(/\s+/).length,
+        }));
+
+        // Insert all documents at once
+        if (documents.length > 0) {
+          await collection.insertMany(documents);
+          console.log(`Inserted ${documents.length} new chunks`);
+        }
+
+        // Add a small delay between batches to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
