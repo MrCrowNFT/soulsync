@@ -4,7 +4,7 @@
 import fs from "fs";
 import pdf from "pdf-parse";
 import { MongoClient } from "mongodb";
-import { getEmbedding } from "../utils/get-embeddings.js"; 
+import { getEmbedding } from "../utils/get-embeddings.js";
 
 // helper function to extract text from PDF
 async function extractTextFromPDF(filePath) {
@@ -14,22 +14,34 @@ async function extractTextFromPDF(filePath) {
 }
 
 // helper function to chunk text
-function chunkText(text, chunkSize = 500) {
-  const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
+function chunkText(text, chunkSize = 500, overlap = 50) {
+  // Clean the text first
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  const sentences = cleanText.match(/[^\.!\?]+[\.!\?]+/g) || [cleanText];
   const chunks = [];
   let current = "";
 
   for (const sentence of sentences) {
-    if ((current + sentence).length < chunkSize) {
-      current += sentence;
+    const trimmedSentence = sentence.trim();
+    if ((current + " " + trimmedSentence).length < chunkSize) {
+      current += (current ? " " : "") + trimmedSentence;
     } else {
-      chunks.push(current);
-      current = sentence;
+      if (current) {
+        chunks.push(current);
+        // Add overlap for context continuity
+        const words = current.split(" ");
+        current =
+          words.slice(-Math.floor(overlap / 10)).join(" ") +
+          " " +
+          trimmedSentence;
+      } else {
+        current = trimmedSentence;
+      }
     }
   }
 
   if (current) chunks.push(current);
-  return chunks;
+  return chunks.filter((chunk) => chunk.length > 20); // Filter out very short chunks
 }
 
 // Process and embed all books
