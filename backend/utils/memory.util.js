@@ -11,7 +11,7 @@ const sentimentAnalyzer = new Sentiment();
  * @param {string} message - The message to analyze
  * @returns {Promise<Memory|null>} - A Memory object or null if no memory was extracted
  */
-export const analyzeAndExtractMemory = async (userId, message) => {
+export const analyzeAndExtractMemory = async (userId, message, embedding) => {
   try {
     // Process the message with compromise
     const doc = nlp(message);
@@ -224,6 +224,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       userId,
       memory: message,
       ...entities,
+      embedding: embedding,
     });
 
     return newMemory;

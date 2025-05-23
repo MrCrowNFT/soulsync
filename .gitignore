@@ -35,3 +35,4 @@ dump/
 
 # PDF/text sources (RAG input)
 books/
+backend/scripts/books

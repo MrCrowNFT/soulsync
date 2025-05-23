@@ -5,6 +5,7 @@ import {
   analyzeAndExtractMemory,
   fetchRelevantMemories,
 } from "../utils/memory.util.js";
+import { getEmbedding } from "../utils/get-embeddings.js";
 
 const CHAT_ENTRY_LIMIT = 100;
 const CONVERSATION_CONTEXT_LIMIT = 5;
@@ -94,6 +95,7 @@ export const getChatEntries = async (req, res) => {
     });
   }
 };
+
 export const newChatEntry = async (req, res) => {
   try {
     console.log("------ NEW CHAT ENTRY PROCESS STARTED ------");
@@ -129,11 +131,14 @@ export const newChatEntry = async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid input" });
     }
 
+    const embedding = getEmbedding(message);
+
     const newChatEntry = new ChatEntry({
       userId: userId,
       message: message,
       sender: sender,
       metadata: metadata || {},
+      embedding: embedding,
     });
     console.log(`Chat entry object created, preparing to save to database`);
     await newChatEntry.save();
@@ -143,7 +148,7 @@ export const newChatEntry = async (req, res) => {
 
     console.log(`Analyzing new chat entry for memory worthiness...`);
     //check if message is new memory worthy and save it
-    const newMemory = await analyzeAndExtractMemory(userId, message);
+    const newMemory = await analyzeAndExtractMemory(userId, message, embedding);
     console.log(
       `Memory extraction result: ${
         newMemory ? "New memory created" : "No memory created"
@@ -164,15 +169,21 @@ export const newChatEntry = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(CONVERSATION_CONTEXT_LIMIT)
       .lean();
-    
-    console.log(`Found ${recentChatEntries.length} recent chat entries for context`);
-    
+
+    console.log(
+      `Found ${recentChatEntries.length} recent chat entries for context`
+    );
+
     // Reverse to chronological order for proper conversation flow
     const orderedChatEntries = recentChatEntries.reverse();
 
     console.log(`Sending message to LLM`);
-    
-    const aiMessage = await getLLMResponse(message, relatedMemories, orderedChatEntries);
+
+    const aiMessage = await getLLMResponse(
+      message,
+      relatedMemories,
+      orderedChatEntries
+    );
     console.log(
       `LLM response received. Response length: ${aiMessage.length} characters`
     );
