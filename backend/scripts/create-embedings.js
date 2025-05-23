@@ -65,7 +65,7 @@ async function run() {
 
       console.log(`Processing ${path} with ${chunks.length} chunks...`);
 
-      // REPLACE THE OLD LOOP WITH BATCH PROCESSING
+
       for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
         const batch = chunks.slice(i, i + BATCH_SIZE);
         console.log(
