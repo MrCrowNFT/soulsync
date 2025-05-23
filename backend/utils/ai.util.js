@@ -121,7 +121,7 @@ Remember: Keep your response conversational and brief, even with this additional
     // Add memories as a separate context message from the assistant
     if (relevantMemories.length > 0) {
       messages.push({
-        role: "assistant",
+        role: "system",
         content: `I'll remember these things about you:\n\n${memoryContext}`,
       });
     }
@@ -156,7 +156,7 @@ Remember: Keep your response conversational and brief, even with this additional
       model: process.env.OPENAI_MODEL ?? "gpt-3.5-turbo",
       messages: messages,
       temperature: 0.8, // Increased for more natural variation
-      max_tokens: 200, // Reduced to encourage brevity
+      max_tokens: 300, // Reduced to encourage brevity
       presence_penalty: 0.6, // Added to discourage repetitive language
       frequency_penalty: 0.5, // Added to encourage diverse vocabulary
     });
