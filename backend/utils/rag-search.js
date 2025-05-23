@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { getEmbedding } from "./get-embeddings.js";
 
 export async function searchSimilarContent(query, limit = 5) {
   try {
@@ -7,8 +6,7 @@ export async function searchSimilarContent(query, limit = 5) {
     const db = mongoose.connection.db;
     const collection = db.collection("book_chunks");
 
-    // Generate embedding for the query
-    const queryEmbedding = await getEmbedding(query);
+    //the query is the embedding so there is no need to generate embedding again
 
     const results = await collection
       .aggregate([
@@ -16,7 +14,7 @@ export async function searchSimilarContent(query, limit = 5) {
           $vectorSearch: {
             index: "vector_index",
             path: "embedding",
-            queryVector: queryEmbedding,
+            queryVector: query,
             numCandidates: 100,
             limit: limit,
           },
@@ -61,6 +59,5 @@ export async function getRAGContext(query, limit = 5) {
 
   return {
     context,
-    sources: results.map((r) => ({ source: r.source, score: r.score })),
   };
 }

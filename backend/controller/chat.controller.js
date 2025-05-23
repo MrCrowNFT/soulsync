@@ -6,6 +6,7 @@ import {
   fetchRelevantMemories,
 } from "../utils/memory.util.js";
 import { getEmbedding } from "../utils/get-embeddings.js";
+import { getRAGContext } from "../utils/rag-search.js";
 
 const CHAT_ENTRY_LIMIT = 100;
 const CONVERSATION_CONTEXT_LIMIT = 5;
@@ -131,6 +132,8 @@ export const newChatEntry = async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid input" });
     }
 
+    console.log(`Generating message embeddings`);
+
     const embedding = getEmbedding(message);
 
     const newChatEntry = new ChatEntry({
@@ -177,12 +180,16 @@ export const newChatEntry = async (req, res) => {
     // Reverse to chronological order for proper conversation flow
     const orderedChatEntries = recentChatEntries.reverse();
 
+    console.log(`Getting RAG context`);
+    const ragContext = getRAGContext(embedding);
+
     console.log(`Sending message to LLM`);
 
     const aiMessage = await getLLMResponse(
       message,
       relatedMemories,
-      orderedChatEntries
+      orderedChatEntries,
+      ragContext
     );
     console.log(
       `LLM response received. Response length: ${aiMessage.length} characters`
