@@ -2,7 +2,7 @@
 // Extracts text from PDFs and stores vector embeddings in MongoDB Atlas
 
 import fs from "fs";
-import pdf from "pdf-parse";
+
 import { MongoClient } from "mongodb";
 import { getEmbedding } from "../utils/get-embeddings.js";
 import dotenv from "dotenv";
@@ -12,9 +12,33 @@ dotenv.config();
 
 // helper function to extract text from PDF
 async function extractTextFromPDF(filePath) {
-  const dataBuffer = fs.readFileSync(filePath);
-  const pdfData = await pdf(dataBuffer);
-  return pdfData.text;
+  return new Promise((resolve, reject) => {
+    const PDFParser = require("pdf2json");
+    const pdfParser = new PDFParser();
+
+    pdfParser.on("pdfParser_dataError", errData => {
+      console.error(`PDF parsing error for ${filePath}:`, errData.parserError);
+      reject(errData.parserError);
+    });
+
+    pdfParser.on("pdfParser_dataReady", pdfData => {
+      let text = "";
+      
+      // Extract text from all pages
+      pdfData.Pages.forEach(page => {
+        page.Texts.forEach(textItem => {
+          textItem.R.forEach(run => {
+            text += decodeURIComponent(run.T) + " ";
+          });
+        });
+        text += "\n"; // Add newline between pages
+      });
+      
+      resolve(text.trim());
+    });
+
+    pdfParser.loadPDF(filePath);
+  });
 }
 
 // helper function to chunk text
@@ -66,6 +90,11 @@ async function run() {
     const collection = db.collection("book_chunks");
 
     for (const path of filePaths) {
+      if (!fs.existsSync(path)) {
+        console.error(`File not found: ${path}`);
+        console.log(`Current working directory: ${process.cwd()}`);
+        process.exit(1);
+      }
       const rawText = await extractTextFromPDF(path);
       const chunks = chunkText(rawText);
 
