@@ -8,6 +8,7 @@ export async function searchSimilarContent(query, limit = 5) {
 
     //the query is the embedding so there is no need to generate embedding again
 
+    console.log("Initializing rag search")
     const results = await collection
       .aggregate([
         {
