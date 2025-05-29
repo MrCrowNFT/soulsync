@@ -11,7 +11,7 @@ const sentimentAnalyzer = new Sentiment();
  * @param {string} message - The message to analyze
  * @returns {Promise<Memory|null>} - A Memory object or null if no memory was extracted
  */
-export const analyzeAndExtractMemory = async (userId, message) => {
+export const analyzeAndExtractMemory = async (userId, message, embedding) => {
   try {
     // Process the message with compromise
     const doc = nlp(message);
@@ -81,7 +81,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       });
     });
 
-    // Extract likes - Fixed pattern matching
+    // Extract likes 
     doc.match("(like|love|enjoy) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 1) {
@@ -97,7 +97,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       }
     });
 
-    // Extract dislikes - Fixed pattern matching
+    // Extract dislikes 
     doc.match("(hate|dislike|can't stand) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 1) {
@@ -112,7 +112,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       }
     });
 
-    // Extract goals - Fixed pattern matching
+    // Extract goals 
     doc
       .match("(want to|going to|plan to|hope to|goal is to) *")
       .forEach((match) => {
@@ -144,7 +144,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
         }
       });
 
-    // Extract pets - Fixed pattern matching
+    // Extract pets 
     doc.match("(my|our) (dog|cat|pet) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 2) {
@@ -159,7 +159,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       }
     });
 
-    // Extract hobbies - Fixed pattern matching
+    // Extract hobbies 
     doc.match("(hobby|interest|passion) is *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 2) {
@@ -174,7 +174,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       }
     });
 
-    // Extract personality traits - Fixed pattern matching
+    // Extract personality traits 
     doc.match("(i am|i'm) a *").forEach((match) => {
       const terms = match.terms();
       const startIndex =
@@ -224,6 +224,7 @@ export const analyzeAndExtractMemory = async (userId, message) => {
       userId,
       memory: message,
       ...entities,
+      embedding: embedding,
     });
 
     return newMemory;

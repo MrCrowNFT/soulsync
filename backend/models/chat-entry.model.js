@@ -22,6 +22,10 @@ const chatEntrySchema = new mongoose.Schema(
         default: "", // Default empty string
       }, // Context of the conversation, not sure how to add this, but might be useful
     },
+    embedding: {
+      type: [Number],
+      default: [],
+    },
   },
   {
     timestamps: true,
