@@ -1,5 +1,8 @@
 import OpenAI from "openai";
+import dotenv from "dotenv";
 
+//needed to add this for running the create embeddings script
+dotenv.config();
 // Set up OpenAI configuration
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

@@ -16,24 +16,24 @@ async function extractTextFromPDF(filePath) {
     const PDFParser = require("pdf2json");
     const pdfParser = new PDFParser();
 
-    pdfParser.on("pdfParser_dataError", errData => {
+    pdfParser.on("pdfParser_dataError", (errData) => {
       console.error(`PDF parsing error for ${filePath}:`, errData.parserError);
       reject(errData.parserError);
     });
 
-    pdfParser.on("pdfParser_dataReady", pdfData => {
+    pdfParser.on("pdfParser_dataReady", (pdfData) => {
       let text = "";
-      
+
       // Extract text from all pages
-      pdfData.Pages.forEach(page => {
-        page.Texts.forEach(textItem => {
-          textItem.R.forEach(run => {
+      pdfData.Pages.forEach((page) => {
+        page.Texts.forEach((textItem) => {
+          textItem.R.forEach((run) => {
             text += decodeURIComponent(run.T) + " ";
           });
         });
         text += "\n"; // Add newline between pages
       });
-      
+
       resolve(text.trim());
     });
 
@@ -76,9 +76,9 @@ function chunkText(text, chunkSize = 500, overlap = 50) {
 async function run() {
   console.log("----Creating embeddings start----");
   const filePaths = [
-    "./scripts/books/emotional_intelligence.pdf",
-    "./scripts/books/The_Body_Keeps_the_Score.pdf",
-    "./scripts/books/The_Subtle_Art_of_Not_Giving_a_F_ck.pdf",
+    "./backend/scripts/books/emotional_intelligence.pdf",
+    "./backend/scripts/books/The_Body_Keeps_the_Score.pdf",
+    "./backend/scripts/books/The_Subtle_Art_of_Not_Giving_a_F_ck.pdf",
   ];
 
   const client = new MongoClient(process.env.MONGO_URI);
