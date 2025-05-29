@@ -5,6 +5,10 @@ import fs from "fs";
 import pdf from "pdf-parse";
 import { MongoClient } from "mongodb";
 import { getEmbedding } from "../utils/get-embeddings.js";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // helper function to extract text from PDF
 async function extractTextFromPDF(filePath) {
