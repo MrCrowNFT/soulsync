@@ -12,32 +12,39 @@ dotenv.config();
 
 // helper function to extract text from PDF
 async function extractTextFromPDF(filePath) {
-  return new Promise((resolve, reject) => {
-    const PDFParser = require("pdf2json");
-    const pdfParser = new PDFParser();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const { default: PDFParser } = await import("pdf2json");
+      const pdfParser = new PDFParser();
 
-    pdfParser.on("pdfParser_dataError", (errData) => {
-      console.error(`PDF parsing error for ${filePath}:`, errData.parserError);
-      reject(errData.parserError);
-    });
-
-    pdfParser.on("pdfParser_dataReady", (pdfData) => {
-      let text = "";
-
-      // Extract text from all pages
-      pdfData.Pages.forEach((page) => {
-        page.Texts.forEach((textItem) => {
-          textItem.R.forEach((run) => {
-            text += decodeURIComponent(run.T) + " ";
-          });
-        });
-        text += "\n"; // Add newline between pages
+      pdfParser.on("pdfParser_dataError", (errData) => {
+        console.error(
+          `PDF parsing error for ${filePath}:`,
+          errData.parserError
+        );
+        reject(errData.parserError);
       });
 
-      resolve(text.trim());
-    });
+      pdfParser.on("pdfParser_dataReady", (pdfData) => {
+        let text = "";
 
-    pdfParser.loadPDF(filePath);
+        // Extract text from all pages
+        pdfData.Pages.forEach((page) => {
+          page.Texts.forEach((textItem) => {
+            textItem.R.forEach((run) => {
+              text += decodeURIComponent(run.T) + " ";
+            });
+          });
+          text += "\n"; // Add newline between pages
+        });
+
+        resolve(text.trim());
+      });
+
+      pdfParser.loadPDF(filePath);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
