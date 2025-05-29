@@ -1,3 +1,4 @@
+// Usage: node backend/scripts/create-index.js
 import { MongoClient } from "mongodb";
 
 async function run() {

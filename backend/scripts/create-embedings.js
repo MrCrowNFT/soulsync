@@ -1,4 +1,4 @@
-// Usage: node scripts/embed-books.js
+// Usage: node backend/scripts/create-embedings.js
 // Extracts text from PDFs and stores vector embeddings in MongoDB Atlas
 
 import fs from "fs";
@@ -48,7 +48,9 @@ function chunkText(text, chunkSize = 500, overlap = 50) {
 async function run() {
   console.log("----Creating embeddings start----");
   const filePaths = [
-    // need to add pdf paths here
+    "./books/emotional_intelligence.pdf",
+    "./books/The _Body_Keeps_the_Score.pdf",
+    "./books/The_Subtle_Art_of_Not_Giving_a_F_ck",
   ];
 
   const client = new MongoClient(process.env.MONGO_URI);
@@ -64,7 +66,6 @@ async function run() {
       const chunks = chunkText(rawText);
 
       console.log(`Processing ${path} with ${chunks.length} chunks...`);
-
 
       for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
         const batch = chunks.slice(i, i + BATCH_SIZE);
