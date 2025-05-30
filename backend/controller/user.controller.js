@@ -1,4 +1,5 @@
-import {User} from "../models/user.model.js";
+import { User } from "../models/user.model.js";
+import logger from "../utils/logger.js";
 
 //todo This functions is not currently needed, user profile is gotten from the login function so maybe just remove it
 /**
@@ -7,17 +8,45 @@ import {User} from "../models/user.model.js";
  * @access Private
  */
 export const getUser = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
     const userId = req.user._id;
+
+    requestLogger.info("Get user profile process started", {
+      userId,
+    });
+
+    const startTime = Date.now();
     const user = await User.findById(userId).select("-password");
+    const queryDuration = Date.now() - startTime;
+
     if (!user) {
+      requestLogger.warn("Get user profile failed - user not found", {
+        userId,
+        queryDuration: `${queryDuration}ms`,
+      });
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    requestLogger.info("User profile retrieved successfully", {
+      userId,
+      queryDuration: `${queryDuration}ms`,
+      username: user.username,
+      email: user.email,
+      hasPhoto: !!user.photo,
+    });
+
     res.status(200).json({ success: true, data: user });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
+    requestLogger.error("Get user profile process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+    });
+
     return res.status(500).json({
       success: false,
       message: "Error fetching user profile",
@@ -33,8 +62,9 @@ export const getUser = async (req, res) => {
  * @access Private
  */
 export const updateUser = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
-    console.log("------ UPDATE USER PROCESS STARTED ------");
     const userId = req.user._id;
     const {
       username,
@@ -47,29 +77,79 @@ export const updateUser = async (req, res) => {
       photo,
     } = req.body;
 
+    const fieldsToUpdate = Object.keys(req.body).filter(
+      (key) => req.body[key] !== undefined
+    );
+
+    requestLogger.info("Update user process started", {
+      userId,
+      fieldsToUpdate,
+      hasPassword: !!password,
+      requestBodyKeys: Object.keys(req.body),
+    });
+
+    const findUserStart = Date.now();
     const user = await User.findById(userId);
+    const findUserDuration = Date.now() - findUserStart;
 
     if (!user) {
+      requestLogger.warn("Update user failed - user not found", {
+        userId,
+        findUserDuration: `${findUserDuration}ms`,
+      });
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
+    // Track which fields are being updated
+    const updatedFields = [];
+
     // Update fields only if provided
-    if (username) user.username = username;
-    if (email) user.email = email;
-    if (name) user.name = name;
-    if (lastName) user.lastName = lastName;
-    if (gender) user.gender = gender;
-    if (birthDate) user.birthDate = new Date(birthDate);
-    if (photo) user.photo = photo;
+    if (username) {
+      user.username = username;
+      updatedFields.push("username");
+    }
+    if (email) {
+      user.email = email;
+      updatedFields.push("email");
+    }
+    if (name) {
+      user.name = name;
+      updatedFields.push("name");
+    }
+    if (lastName) {
+      user.lastName = lastName;
+      updatedFields.push("lastName");
+    }
+    if (gender) {
+      user.gender = gender;
+      updatedFields.push("gender");
+    }
+    if (birthDate) {
+      user.birthDate = new Date(birthDate);
+      updatedFields.push("birthDate");
+    }
+    if (photo) {
+      user.photo = photo;
+      updatedFields.push("photo");
+    }
 
     // Handle password separately to ensure it gets hashed
     if (password) {
       user.password = password;
+      updatedFields.push("password");
     }
 
+    requestLogger.info("User fields prepared for update", {
+      userId,
+      updatedFields,
+      fieldsCount: updatedFields.length,
+    });
+
+    const saveStart = Date.now();
     const updatedUser = await user.save();
+    const saveDuration = Date.now() - saveStart;
 
     // Return the updated user without password
     const userResponse = {
@@ -85,7 +165,14 @@ export const updateUser = async (req, res) => {
       updatedAt: updatedUser.updatedAt,
     };
 
-    console.log("------ UPDATE USER PROCESS COMPLETED SUCCESSFULLY ------");
+    requestLogger.info("User profile updated successfully", {
+      userId,
+      updatedFields,
+      fieldsCount: updatedFields.length,
+      saveDuration: `${saveDuration}ms`,
+      username: updatedUser.username,
+      email: updatedUser.email,
+    });
 
     return res.status(200).json({
       success: true,
@@ -93,12 +180,28 @@ export const updateUser = async (req, res) => {
       user: userResponse,
     });
   } catch (error) {
-    console.error("------ UPDATE USER PROCESS FAILED ------");
-    console.error("Error updating user:", error);
+    requestLogger.error("Update user process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+      requestBody: {
+        fieldsProvided: Object.keys(req.body || {}),
+        hasPassword: !!(req.body && req.body.password),
+      },
+      errorCode: error.code,
+      errorName: error.name,
+    });
 
     // Handle duplicate key errors (username or email already exists)
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
+
+      requestLogger.warn("Update user failed - duplicate key error", {
+        userId: req.user?._id,
+        duplicateField: field,
+        errorCode: error.code,
+      });
+
       return res.status(400).json({
         success: false,
         message: `${
@@ -110,6 +213,13 @@ export const updateUser = async (req, res) => {
     // Handle validation errors
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((val) => val.message);
+
+      requestLogger.warn("Update user failed - validation error", {
+        userId: req.user?._id,
+        validationErrors: messages,
+        errorFields: Object.keys(error.errors || {}),
+      });
+
       return res.status(400).json({
         success: false,
         message: messages.join(", "),
@@ -130,21 +240,50 @@ export const updateUser = async (req, res) => {
  * @access Private
  */
 export const deleteUserAccount = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
     const userId = req.user._id;
+
+    requestLogger.info("Delete user account process started", {
+      userId,
+    });
+
+    const findStart = Date.now();
     const user = await User.findById(userId);
+    const findDuration = Date.now() - findStart;
 
     if (!user) {
+      requestLogger.warn("Delete user account failed - user not found", {
+        userId,
+        findDuration: `${findDuration}ms`,
+      });
       return res.status(404).json({ message: "User not found" });
     }
 
+    const deleteStart = Date.now();
     await User.findByIdAndDelete(userId);
+    const deleteDuration = Date.now() - deleteStart;
+
+    requestLogger.info("User account deleted successfully", {
+      userId,
+      username: user.username,
+      email: user.email,
+      findDuration: `${findDuration}ms`,
+      deleteDuration: `${deleteDuration}ms`,
+      totalDuration: `${findDuration + deleteDuration}ms`,
+    });
 
     return res
       .status(200)
       .json({ success: true, message: "User account deleted successfully" });
   } catch (error) {
-    console.error("Error deleting user account:", error);
+    requestLogger.error("Delete user account process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+    });
+
     return res.status(500).json({
       success: false,
       message: "Error deleting user account",
