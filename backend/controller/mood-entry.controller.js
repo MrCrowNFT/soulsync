@@ -1,82 +1,108 @@
 import { MoodEntry } from "../models/mood-entry.model.js";
 import mongoose from "mongoose";
 import { getMoodAverages } from "../helpers/mood-entry.helper.js";
+import logger from "../utils/logger.js";
 
 export const newMoodEntry = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
-    console.log(`------ NEW MOOD ENTRY PROCESS STARTED ------`);
-    console.log(`Request body:`, JSON.stringify(req.body));
-    console.log(`Request user:`, JSON.stringify(req.user));
-
     const userId = req.user?._id;
-    console.log(`Extracted userId: ${userId}`);
-
     const mood = req.body.mood || req.body;
-    console.log(`Extracted mood data: ${mood}`);
+
+    requestLogger.info("New mood entry process started", {
+      userId,
+      moodInput: mood,
+      hasUserId: !!userId,
+      hasMood: !!mood,
+      requestBodyKeys: Object.keys(req.body),
+    });
 
     // Check if required fields exist
     if (!userId || !mood) {
-      console.log(`Validation failed: Missing userId or mood`);
+      requestLogger.warn("New mood entry failed - missing required fields", {
+        hasUserId: !!userId,
+        hasMood: !!mood,
+      });
       return res
         .status(400)
         .json({ success: false, error: "userId and mood are required" });
     }
 
     // Validate userId format
-    console.log(`Validating userId format: ${userId}`);
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log(`Invalid userId format: ${userId}`);
+      requestLogger.warn("New mood entry failed - invalid userId format", {
+        userId,
+      });
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
 
     // Parse and validate mood value
-    console.log(`Parsing mood value: ${mood}`);
     const moodValue = parseInt(mood, 10);
-    console.log(`Parsed mood value: ${moodValue}`);
+
+    requestLogger.info("Mood value validation", {
+      userId,
+      originalMood: mood,
+      parsedMood: moodValue,
+      isValidNumber: !isNaN(moodValue),
+      isInRange: moodValue >= 1 && moodValue <= 5,
+    });
 
     if (isNaN(moodValue)) {
-      console.log(`Invalid mood value (not a number): ${mood}`);
+      requestLogger.warn(
+        "New mood entry failed - invalid mood value (not a number)",
+        {
+          userId,
+          moodInput: mood,
+        }
+      );
       return res
         .status(400)
         .json({ success: false, error: "Mood must be a number" });
     }
 
     if (moodValue < 1 || moodValue > 5) {
-      console.log(`Mood value out of range: ${moodValue}`);
+      requestLogger.warn("New mood entry failed - mood value out of range", {
+        userId,
+        moodValue,
+        validRange: "1-5",
+      });
       return res
         .status(400)
         .json({ success: false, error: "Mood must be between 1 and 5" });
     }
 
-    // Create new mood entry
-    console.log(
-      `Creating new MoodEntry document with userId: ${userId}, mood: ${moodValue}`
-    );
+    // Create and save new mood entry
+    const startTime = Date.now();
     const newMoodEntry = new MoodEntry({
       userId: userId,
       mood: moodValue,
     });
 
-    console.log(`MoodEntry object created:`, JSON.stringify(newMoodEntry));
-
-    // Save to database
-    console.log(`Attempting to save mood entry to database...`);
     await newMoodEntry.save();
-    console.log(
-      `New mood entry saved successfully with id: ${newMoodEntry._id}`
-    );
+    const saveDuration = Date.now() - startTime;
 
-    console.log("------ NEW MOOD ENTRY PROCESS COMPLETED SUCCESSFULLY ------");
+    requestLogger.info("New mood entry saved successfully", {
+      userId,
+      moodEntryId: newMoodEntry._id,
+      moodValue,
+      saveDuration: `${saveDuration}ms`,
+      createdAt: newMoodEntry.createdAt,
+    });
 
-    // Send response
     return res.status(201).json({ success: true, data: newMoodEntry });
   } catch (error) {
-    console.error(`------ NEW MOOD ENTRY PROCESS FAILED ------`);
-    console.error(`Error name: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
+    requestLogger.error("New mood entry process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+      requestBody: {
+        mood: req.body.mood || req.body,
+        bodyKeys: Object.keys(req.body || {}),
+      },
+    });
 
     return res.status(500).json({
       success: false,
@@ -87,68 +113,80 @@ export const newMoodEntry = async (req, res) => {
 };
 
 export const getEntries = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
-    console.log("------ GET ENTRIES PROCESS STARTED ------");
-    console.log(`Request path: ${req.path}`);
-    console.log(`Request method: ${req.method}`);
-
     const userId = req.user._id;
-    console.log(`User ID from request: ${userId}`);
+    const type = req.params.type;
 
-    const type = req.params.type; //to get the string so that the getMoodAverages functions recieve it
-    console.log(`Entry type requested: ${JSON.stringify(type)}`);
+    requestLogger.info("Get mood entries process started", {
+      userId,
+      type,
+      requestPath: req.path,
+      requestMethod: req.method,
+    });
 
     // Check if required parameters exist
-    console.log(`Required parameters exist: ${userId && type ? "Yes" : "No"}`);
     if (!userId || !type) {
-      console.log("ERROR: Missing required parameters (userId or type)");
+      requestLogger.warn(
+        "Get mood entries failed - missing required parameters",
+        {
+          hasUserId: !!userId,
+          hasType: !!type,
+          userId,
+          type,
+        }
+      );
       return res
         .status(400)
         .json({ success: false, error: "userId and type are required" });
     }
 
     // Validate userId format
-    console.log(`Validating user ID format: ${userId}`);
-    console.log(
-      `User ID is valid ObjectId: ${
-        mongoose.Types.ObjectId.isValid(userId) ? "Yes" : "No"
-      }`
-    );
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log("ERROR: Invalid user ID format");
+      requestLogger.warn("Get mood entries failed - invalid userId format", {
+        userId,
+        type,
+      });
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
 
-    console.log(`Calculating mood averages for user: ${userId}`);
-    console.log(`With parameters: ${JSON.stringify(type)}`);
+    // Calculate mood averages
+    const calculationStart = Date.now();
     const averages = await getMoodAverages(userId, type);
-    console.log(
-      `Mood averages calculation result: ${averages ? "Successful" : "Failed"}`
-    );
-   
-    console.log(`Raw aggregation results:`, averages);
-    console.log(`Formatted data:`, {
-      labels: averages.labels,
-      hasLabels: averages.labels && averages.labels.length > 0,
-      datasets: averages.datasets.map((ds) => ({
+    const calculationDuration = Date.now() - calculationStart;
+
+    const hasData = averages && averages.labels && averages.labels.length > 0;
+    const datasetsInfo =
+      averages?.datasets?.map((ds) => ({
         label: ds.label,
-        dataLength: ds.data.length,
+        dataLength: ds.data?.length || 0,
         hasData: ds.data && ds.data.length > 0,
-        sampleData: ds.data.slice(0, 3), // Show first 3 items if any
-      })),
+      })) || [];
+
+    requestLogger.info("Mood averages calculation completed", {
+      userId,
+      type,
+      calculationDuration: `${calculationDuration}ms`,
+      hasData,
+      labelsCount: averages?.labels?.length || 0,
+      datasetsCount: averages?.datasets?.length || 0,
+      datasetsInfo,
     });
 
-    console.log("------ GET ENTRIES PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(200).json({ success: true, data: averages });
   } catch (error) {
-    console.error("------ GET ENTRIES PROCESS FAILED ------");
-    console.error(`Error type: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
-    console.error(`Request user: ${JSON.stringify(req.user)}`);
-    console.error(`Request params: ${JSON.stringify(req.params)}`);
+    requestLogger.error("Get mood entries process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+      requestParams: req.params,
+      requestPath: req.path,
+      requestMethod: req.method,
+    });
+
     return res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -157,31 +195,53 @@ export const getEntries = async (req, res) => {
   }
 };
 
-//todo user can not yet delete mood entries
 export const deleteMoodEntries = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
     const userId = req.user._id;
 
+    requestLogger.info("Delete mood entries process started", {
+      userId,
+    });
+
     if (!userId) {
+      requestLogger.warn("Delete mood entries failed - no userId");
       return res
         .status(400)
         .json({ success: false, error: "userId are required" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      requestLogger.warn("Delete mood entries failed - invalid userId format", {
+        userId,
+      });
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
 
-    await MoodEntry.deleteMany({ userId: userId });
+    const startTime = Date.now();
+    const deleteResult = await MoodEntry.deleteMany({ userId: userId });
+    const deleteDuration = Date.now() - startTime;
+
+    requestLogger.info("Mood entries deleted successfully", {
+      userId,
+      deletedCount: deleteResult.deletedCount,
+      deleteDuration: `${deleteDuration}ms`,
+    });
 
     return res.status(200).json({
       success: true,
       message: "All Mood entries deleted successfully",
     });
   } catch (error) {
-    console.error("Error in deleteMoodEntries:", error);
+    requestLogger.error("Delete mood entries process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+    });
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -189,5 +249,3 @@ export const deleteMoodEntries = async (req, res) => {
     });
   }
 };
-
-//* the system is design to simply add and get, there's still no need for the update function
