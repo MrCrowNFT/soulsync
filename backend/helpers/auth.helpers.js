@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import logger from "./logger.js";
 
 // Constants for token expiration -> subject to change
 const ACCESS_TOKEN_EXPIRY = "5m";
@@ -10,13 +11,28 @@ const REFRESH_TOKEN_EXPIRY = "30d";
  * @throws {Error} If any required variable is missing
  */
 const validateEnvironmentVars = (requiredVars) => {
+  logger.debug("Validating environment variables", {
+    requiredCount: requiredVars.length,
+    variables: requiredVars,
+  });
+
   const missing = requiredVars.filter((varName) => !process.env[varName]);
 
   if (missing.length > 0) {
+    logger.error("Missing required environment variables", {
+      missing,
+      requiredVars,
+      missingCount: missing.length,
+    });
+
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}`
     );
   }
+
+  logger.debug("Environment variables validated successfully", {
+    validatedCount: requiredVars.length,
+  });
 };
 
 /**
@@ -26,17 +42,50 @@ const validateEnvironmentVars = (requiredVars) => {
  * @throws {Error} If required environment variables are missing
  */
 export const generateAccessToken = (user) => {
-  validateEnvironmentVars(["JWT_ACCESS_SECRET"]);
-//mongo db adds an id as _id automatically
-  if (!user || !user._id || !user.username) {
-    throw new Error("Invalid user object provided");
-  }
+  logger.debug("Access token generation started", {
+    userId: user?._id,
+    username: user?.username,
+    expiry: ACCESS_TOKEN_EXPIRY,
+  });
 
-  return jwt.sign(
-    { _id: user._id, username: user.username },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRY }
-  );
+  try {
+    validateEnvironmentVars(["JWT_ACCESS_SECRET"]);
+
+    // MongoDB adds an id as _id automatically
+    if (!user || !user._id || !user.username) {
+      logger.warn("Access token generation failed - invalid user object", {
+        hasUser: !!user,
+        hasId: !!user?._id,
+        hasUsername: !!user?.username,
+        userType: typeof user,
+      });
+      throw new Error("Invalid user object provided");
+    }
+
+    const token = jwt.sign(
+      { _id: user._id, username: user.username },
+      process.env.JWT_ACCESS_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+
+    logger.info("Access token generated successfully", {
+      userId: user._id,
+      username: user.username,
+      expiry: ACCESS_TOKEN_EXPIRY,
+      tokenLength: token.length,
+    });
+
+    return token;
+  } catch (error) {
+    logger.error("Access token generation error", {
+      error: error.message,
+      userId: user?._id,
+      username: user?.username,
+      stack: error.stack,
+    });
+
+    throw error;
+  }
 };
 
 /**
@@ -46,17 +95,49 @@ export const generateAccessToken = (user) => {
  * @throws {Error} If required environment variables are missing
  */
 export const generateRefreshToken = (user) => {
-  validateEnvironmentVars(["JWT_REFRESH_SECRET"]);
+  logger.debug("Refresh token generation started", {
+    userId: user?._id,
+    username: user?.username,
+    expiry: REFRESH_TOKEN_EXPIRY,
+  });
 
-  if (!user || !user._id || !user.username) {
-    throw new Error("Invalid user object provided");
+  try {
+    validateEnvironmentVars(["JWT_REFRESH_SECRET"]);
+
+    if (!user || !user._id || !user.username) {
+      logger.warn("Refresh token generation failed - invalid user object", {
+        hasUser: !!user,
+        hasId: !!user?._id,
+        hasUsername: !!user?.username,
+        userType: typeof user,
+      });
+      throw new Error("Invalid user object provided");
+    }
+
+    const token = jwt.sign(
+      { _id: user._id, username: user.username },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRY }
+    );
+
+    logger.info("Refresh token generated successfully", {
+      userId: user._id,
+      username: user.username,
+      expiry: REFRESH_TOKEN_EXPIRY,
+      tokenLength: token.length,
+    });
+
+    return token;
+  } catch (error) {
+    logger.error("Refresh token generation error", {
+      error: error.message,
+      userId: user?._id,
+      username: user?.username,
+      stack: error.stack,
+    });
+
+    throw error;
   }
-
-  return jwt.sign(
-    { _id: user._id, username: user.username },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY }
-  );
 };
 
 /**
@@ -66,14 +147,53 @@ export const generateRefreshToken = (user) => {
  * @throws {Error} If required environment variables are missing
  */
 export const generateTokens = (user) => {
-  validateEnvironmentVars(["JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"]);
+  const startTime = Date.now();
 
-  if (!user || !user._id || !user.username) {
-    throw new Error("Invalid user object provided");
+  logger.info("Token pair generation started", {
+    userId: user?._id,
+    username: user?.username,
+    accessTokenExpiry: ACCESS_TOKEN_EXPIRY,
+    refreshTokenExpiry: REFRESH_TOKEN_EXPIRY,
+  });
+
+  try {
+    validateEnvironmentVars(["JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET"]);
+
+    if (!user || !user._id || !user.username) {
+      logger.warn("Token pair generation failed - invalid user object", {
+        hasUser: !!user,
+        hasId: !!user?._id,
+        hasUsername: !!user?.username,
+        userType: typeof user,
+      });
+      throw new Error("Invalid user object provided");
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    const duration = Date.now() - startTime;
+
+    logger.info("Token pair generated successfully", {
+      userId: user._id,
+      username: user.username,
+      duration: `${duration}ms`,
+      accessTokenLength: accessToken.length,
+      refreshTokenLength: refreshToken.length,
+    });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+
+    logger.error("Token pair generation error", {
+      error: error.message,
+      userId: user?._id,
+      username: user?.username,
+      duration: `${duration}ms`,
+      stack: error.stack,
+    });
+
+    throw error;
   }
-
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  return { accessToken, refreshToken };
 };
