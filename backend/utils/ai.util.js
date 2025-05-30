@@ -1,4 +1,4 @@
-import logger from "../utils/logger.js";
+import logger from "./logger.js";
 
 /**
  * Generates an AI response using the user's message and relevant memories

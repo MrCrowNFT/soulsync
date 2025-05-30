@@ -1,5 +1,5 @@
 import { OpenAI } from "openai";
-import logger from "../utils/logger.js";
+import logger from "./logger.js";
 
 /**
  * Generates an assessment of the user's mental health based on mood entries and memories
