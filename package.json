@@ -26,7 +26,8 @@
     "nodemon": "^3.1.9",
     "openai": "^4.95.1",
     "pdf2json": "^3.1.6",
-    "sentiment": "^5.0.2"
+    "sentiment": "^5.0.2",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
