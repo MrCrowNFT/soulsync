@@ -1,6 +1,6 @@
 import {User} from "../models/user.model.js";
 
-//todo This functions is not currently needed, user profile is gotten from the login function
+//todo This functions is not currently needed, user profile is gotten from the login function so maybe just remove it
 /**
  * Get user profile using _id from token
  * @route GET /user
