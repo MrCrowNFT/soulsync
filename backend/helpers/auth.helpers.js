@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import logger from "./logger.js";
+import logger from "../utils/logger.js";
 
 // Constants for token expiration -> subject to change
 const ACCESS_TOKEN_EXPIRY = "5m";
