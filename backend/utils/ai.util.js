@@ -1,55 +1,62 @@
+import logger from "./logger.js";
+
 /**
  * Generates an AI response using the user's message and relevant memories
  * @param {string} message - The user's message
  * @param {Array} memories - Array of relevant memory objects
  * @param {Array} recentChatEntries - Array of recent chat entries to improve conversational response
  * @param {Object} ragContext - RAG context object with relevant knowledge base content
+ * @param {Object} requestLogger - Optional request logger for request-specific logging
  * @returns {Promise<string>} - The AI's response
  */
 export const getLLMResponse = async (
   message,
   memories,
   recentChatEntries = [],
-  ragContext
+  ragContext,
+  requestLogger = logger
 ) => {
-  console.log("------ LLM RESPONSE GENERATION STARTED ------");
-  console.log(`Input message: "${message}"`);
-  console.log(`Memories provided: ${memories.length}`);
-  console.log(`Recent chat entries provided: ${recentChatEntries.length}`);
-  console.log(`RAG context provided: ${ragContext?.context ? "Yes" : "No"}`);
-  if (ragContext?.context) {
-    console.log(`RAG context length: ${ragContext.context.length} characters`);
-  }
+  const functionStart = Date.now();
+  
+  requestLogger.info("LLM response generation started", {
+    messageLength: message?.length || 0,
+    memoriesCount: memories.length,
+    recentChatEntriesCount: recentChatEntries.length,
+    hasRagContext: !!ragContext?.context,
+    ragContextLength: ragContext?.context?.length || 0
+  });
 
   try {
     if (!message || typeof message !== "string") {
-      console.error("ERROR: Invalid message input type:", typeof message);
+      requestLogger.error("Invalid message input for LLM", {
+        messageType: typeof message,
+        messageValue: message
+      });
       throw new Error("Invalid message input");
     }
 
-    console.log("Importing OpenAI...");
+    // OpenAI setup validation
+    requestLogger.info("Initializing OpenAI client", {
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      model: process.env.OPENAI_MODEL || "gpt-3.5-turbo"
+    });
+
     const { OpenAI } = await import("openai");
-
-    console.log(
-      `OpenAI API Key available: ${process.env.OPENAI_API_KEY ? "Yes" : "No"}`
-    );
-    console.log(`Using model: ${process.env.OPENAI_MODEL || "gpt-3.5-turbo"}`);
-
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
     // Process memories for context
     const relevantMemories = memories.slice(0, 3); // prevent token explosion
-    console.log(`Using ${relevantMemories.length} memories for context`);
-
-    // Log memory content
-    relevantMemories.forEach((mem, idx) => {
-      console.log(
-        `Memory ${idx + 1}: ${
-          mem.memory ? mem.memory.substring(0, 50) + "..." : "[empty]"
-        }`
-      );
+    
+    requestLogger.info("Processing memories for context", {
+      totalMemories: memories.length,
+      selectedMemories: relevantMemories.length,
+      memoryPreview: relevantMemories.map((mem, idx) => ({
+        index: idx + 1,
+        preview: mem.memory ? mem.memory.substring(0, 50) + "..." : "[empty]",
+        hasPersonality: !!(mem.personality && mem.personality.length > 0)
+      }))
     });
 
     // Format memories properly for context
@@ -62,26 +69,19 @@ export const getLLMResponse = async (
       memoryContext = "No previous memories available";
     }
 
-    console.log("Memory context length:", memoryContext.length);
-    console.log(
-      "Memory context preview:",
-      memoryContext.substring(0, 100) +
-        (memoryContext.length > 100 ? "..." : "")
-    );
-
     // Extract personality traits for additional context
-    console.log("Extracting personality traits...");
     const allTraits = relevantMemories.flatMap((m) => m.personality || []);
-    console.log(
-      `All traits found: ${allTraits.length ? allTraits.join(", ") : "none"}`
-    );
-
     const personalityTraits = allTraits
       .filter((trait, i, self) => self.indexOf(trait) === i)
       .slice(0, 2) // Only use top 2 traits for more concise responses
       .join(", ");
 
-    console.log(`Selected personality traits: ${personalityTraits || "none"}`);
+    requestLogger.info("Memory context prepared", {
+      memoryContextLength: memoryContext.length,
+      allTraitsCount: allTraits.length,
+      selectedPersonalityTraits: personalityTraits || "none",
+      memoryContextPreview: memoryContext.substring(0, 100) + (memoryContext.length > 100 ? "..." : "")
+    });
 
     // Build a clear system prompt with RAG knowledge integration
     let systemPrompt = `
@@ -104,7 +104,10 @@ export const getLLMResponse = async (
 
     // Add RAG context to system prompt if available
     if (ragContext?.context && ragContext.context.trim()) {
-      console.log("Adding RAG knowledge base context to system prompt");
+      requestLogger.info("Adding RAG knowledge base context to system prompt", {
+        ragContextLength: ragContext.context.length
+      });
+      
       systemPrompt += `\n\n--- KNOWLEDGE BASE CONTEXT ---
 The following information from mental health resources may be relevant to the user's question.
 Use this information to inform your response, but don't quote it directly or mention "according to sources".
@@ -128,9 +131,9 @@ Remember: Keep your response conversational and brief, even with this additional
 
     // Add recent conversation history as context (up to 5 messages max)
     if (recentChatEntries.length > 0) {
-      console.log(
-        `Adding ${recentChatEntries.length} recent chat entries to context`
-      );
+      requestLogger.info("Adding recent chat entries to conversation context", {
+        recentEntriesCount: recentChatEntries.length
+      });
 
       // Format each chat entry into the appropriate role and content
       recentChatEntries.forEach((entry) => {
@@ -145,47 +148,77 @@ Remember: Keep your response conversational and brief, even with this additional
     // Add the actual user message as the thing to respond to
     messages.push({ role: "user", content: message });
 
-    console.log(
-      "Messages array structure prepared with clear context separation"
-    );
-    console.log(`Total messages: ${messages.length}`);
+    const messagesStructure = {
+      totalMessages: messages.length,
+      systemMessages: messages.filter(m => m.role === "system").length,
+      userMessages: messages.filter(m => m.role === "user").length,
+      assistantMessages: messages.filter(m => m.role === "assistant").length
+    };
 
-    console.log("Sending request to OpenAI...");
-    console.time("openai_request_time");
+    requestLogger.info("Messages array prepared for OpenAI", messagesStructure);
+
+    // Make OpenAI API call
+    const apiCallStart = Date.now();
+    requestLogger.info("Sending request to OpenAI API");
+    
     const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? "gpt-3.5-turbo",
       messages: messages,
-      temperature: 0.8, // Increased for more natural variation
-      max_tokens: 300, // Reduced to encourage brevity
-      presence_penalty: 0.6, // Added to discourage repetitive language
-      frequency_penalty: 0.5, // Added to encourage diverse vocabulary
+      temperature: 0.8, 
+      max_tokens: 300, 
+      presence_penalty: 0.6, 
+      frequency_penalty: 0.5, 
     });
-    console.timeEnd("openai_request_time");
 
-    console.log("OpenAI response received");
-    console.log(
-      `Response tokens used: ${response.usage?.total_tokens || "N/A"}`
-    );
+    const apiCallDuration = Date.now() - apiCallStart;
+    const functionDuration = Date.now() - functionStart;
 
     const aiResponse = response.choices[0].message.content.trim();
-    console.log(`AI response length: ${aiResponse.length} characters`);
-    console.log(`AI response: "${aiResponse}"`);
 
-    console.log("------ LLM RESPONSE GENERATION COMPLETED SUCCESSFULLY ------");
+    requestLogger.info("LLM response generation completed successfully", {
+      aiResponseLength: aiResponse.length,
+      tokensUsed: response.usage?.total_tokens || 0,
+      promptTokens: response.usage?.prompt_tokens || 0,
+      completionTokens: response.usage?.completion_tokens || 0,
+      apiCallDuration: `${apiCallDuration}ms`,
+      totalFunctionDuration: `${functionDuration}ms`,
+      model: response.model || "unknown",
+      finishReason: response.choices[0].finish_reason
+    });
+
+    // Log response preview for debugging
+    requestLogger.debug("AI response preview", {
+      responsePreview: aiResponse.substring(0, 100) + (aiResponse.length > 100 ? "..." : "")
+    });
+
     return aiResponse;
   } catch (error) {
-    console.error("------ LLM RESPONSE GENERATION FAILED ------");
-    console.error(`Error type: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
+    const functionDuration = Date.now() - functionStart;
+    
+    requestLogger.error("LLM response generation failed", {
+      error: error.message,
+      stack: error.stack,
+      errorType: error.name,
+      functionDuration: `${functionDuration}ms`,
+      openaiError: error.response ? {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      } : null,
+      inputContext: {
+        messageLength: message?.length || 0,
+        memoriesCount: memories.length,
+        recentChatEntriesCount: recentChatEntries.length,
+        hasRagContext: !!ragContext?.context
+      }
+    });
 
-    // Check for specific OpenAI errors
-    if (error.response) {
-      console.error(`OpenAI Error Status: ${error.response.status}`);
-      console.error(`OpenAI Error Data:`, error.response.data);
-    }
-
-    console.error("Returning fallback response");
-    return "Sorry, I'm having a moment. Can we try that again?";
+    // Return fallback response
+    const fallbackResponse = "Sorry, I'm having a moment. Can we try that again?";
+    requestLogger.info("Returning fallback response", {
+      fallbackResponse
+    });
+    
+    return fallbackResponse;
   }
 };

@@ -7,9 +7,12 @@ import {
 } from "../utils/memory.util.js";
 import { getEmbedding } from "../utils/get-embeddings.js";
 import { getRAGContext } from "../utils/rag-search.js";
+import logger from "../utils/logger.js";
 
+//todo probably should make a constants file
 const CHAT_ENTRY_LIMIT = 100;
 const CONVERSATION_CONTEXT_LIMIT = 5;
+
 //**We don't need a chat entry update method
 /**
  * Get the chat entries when the user loads the chat
@@ -17,77 +20,65 @@ const CONVERSATION_CONTEXT_LIMIT = 5;
  * @param res
  */
 export const getChatEntries = async (req, res) => {
-  try {
-    console.log("------ GET CHAT ENTRIES PROCESS STARTED ------");
-    console.log(`Request path: ${req.path}`);
-    console.log(`Request method: ${req.method}`);
+  const requestLogger = req.logger || logger;
 
+  try {
     const userId = req.user?._id;
     const limit = CHAT_ENTRY_LIMIT;
 
-    console.log(`Attempting to get chat entries for user: ${userId}`);
-    console.log(`Using entry limit: ${limit}`);
+    requestLogger.info("Chat entries retrieval started", { userId, limit });
 
     if (!userId) {
-      console.log("ERROR: userId not found in request");
+      requestLogger.warn("Chat entries failed - no userId");
       return res.status(400).json({ success: false, error: "userId required" });
     }
-    console.log("User ID present in request");
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log(`ERROR: Invalid user ID format: ${userId}`);
+      requestLogger.warn("Chat entries failed - invalid userId format", {
+        userId,
+      });
       return res
         .status(400)
         .json({ success: false, message: "invalid user id" });
     }
-    console.log(`User ID format validated: ${userId}`);
-
-    console.log(`Querying database for chat entries with userId: ${userId}`);
-    console.log(
-      `Query parameters: { sort: { createdAt: -1 }, limit: ${limit} }`
-    );
 
     const startTime = Date.now();
     const chatEntries = await ChatEntry.find({ userId: userId })
       .sort({ createdAt: 1 }) // from oldest to newest for it to be shown properly on the ui
       .limit(limit); // default to 100 entries
-    const queryTime = Date.now() - startTime;
-
-    console.log(`Database query completed in ${queryTime}ms`);
-    console.log(`Number of chat entries found: ${chatEntries?.length || 0}`);
+    const queryDuration = Date.now() - startTime;
 
     if (!chatEntries) {
-      console.log(`No chat entries found for user: ${userId}`);
+      requestLogger.info("No chat entries found", { userId });
       return res.status(404).json({
         success: false,
         message: "No chat entries found",
       });
     }
 
-    const oldestEntry =
-      chatEntries.length > 0
-        ? new Date(chatEntries[chatEntries.length - 1].createdAt)
-        : "none";
-    const newestEntry =
-      chatEntries.length > 0 ? new Date(chatEntries[0].createdAt) : "none";
-
-    console.log(`Chat entries retrieved successfully for user: ${userId}`);
-    console.log(`Date range: ${oldestEntry} to ${newestEntry}`);
-    console.log(`Returning ${chatEntries.length} entries to client`);
-    console.log(
-      "------ GET CHAT ENTRIES PROCESS COMPLETED SUCCESSFULLY ------"
-    );
+    requestLogger.info("Chat entries retrieved successfully", {
+      userId,
+      entriesCount: chatEntries.length,
+      queryDuration: `${queryDuration}ms`,
+      dateRange:
+        chatEntries.length > 0
+          ? {
+              oldest: chatEntries[0].createdAt,
+              newest: chatEntries[chatEntries.length - 1].createdAt,
+            }
+          : null,
+    });
 
     return res.status(200).json({
       success: true,
       data: chatEntries,
     });
   } catch (error) {
-    console.error("------ GET CHAT ENTRIES PROCESS FAILED ------");
-    console.error(`Error type: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
-    console.error(`User ID from request: ${req.user?._id || "undefined"}`);
+    requestLogger.error("Chat entries retrieval error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+    });
 
     return res.status(500).json({
       success: false,
@@ -98,29 +89,20 @@ export const getChatEntries = async (req, res) => {
 };
 
 export const newChatEntry = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
-    console.log("------ NEW CHAT ENTRY PROCESS STARTED ------");
-    console.log(`Request path: ${req.path}`);
-    console.log(`Request method: ${req.method}`);
-
     const userId = req.user._id;
-    console.log(`Creating new chat entry for user: ${userId}...`);
-
     const { message, sender, metadata } = req.body;
-    console.log(`Message length: ${message ? message.length : 0} characters`);
-    console.log(`Sender: ${sender}`);
-    console.log(`Metadata provided: ${metadata ? "Yes" : "No"}`);
+
+    requestLogger.info("New chat entry process started", {
+      userId,
+      sender,
+      messageLength: message?.length || 0,
+      hasMetadata: !!metadata,
+    });
 
     //more compact validation
-    console.log("Validating input parameters...");
-    console.log(
-      `User ID valid: ${mongoose.Types.ObjectId.isValid(userId) ? "Yes" : "No"}`
-    );
-    console.log(`Message provided: ${message ? "Yes" : "No"}`);
-    console.log(
-      `Sender valid: ${["user", "ai"].includes(sender) ? "Yes" : "No"}`
-    );
-
     if (
       !userId ||
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -128,14 +110,19 @@ export const newChatEntry = async (req, res) => {
       !sender ||
       !["user", "ai"].includes(sender)
     ) {
-      console.log("ERROR: Invalid input parameters");
+      requestLogger.warn("New chat entry failed - invalid input", {
+        userId,
+        hasMessage: !!message,
+        sender,
+        validSender: ["user", "ai"].includes(sender),
+      });
       return res.status(400).json({ success: false, error: "Invalid input" });
     }
 
-    console.log(`Generating message embeddings`);
-
+    // Generate embeddings
     const embedding = await getEmbedding(message);
 
+    // Save user message
     const newChatEntry = new ChatEntry({
       userId: userId,
       message: message,
@@ -143,76 +130,84 @@ export const newChatEntry = async (req, res) => {
       metadata: metadata || {},
       embedding: embedding,
     });
-    console.log(`Chat entry object created, preparing to save to database`);
-    await newChatEntry.save();
-    console.log(
-      `New chat entry saved successfully. Entry ID: ${newChatEntry._id}`
-    );
 
-    console.log(`Analyzing new chat entry for memory worthiness...`);
-    //check if message is new memory worthy and save it
+    await newChatEntry.save();
+
+    requestLogger.info("User chat entry saved", {
+      userId,
+      entryId: newChatEntry._id,
+      messageLength: message.length,
+    });
+
+    // Memory analysis
     const newMemory = await analyzeAndExtractMemory(userId, message, embedding);
-    console.log(
-      `Memory extraction result: ${
-        newMemory ? "New memory created" : "No memory created"
-      }`
-    );
     if (newMemory) {
       await newMemory.save();
-      console.log(`New memory saved successfully. Memory ID: ${newMemory._id}`);
+      requestLogger.info("New memory created from chat", {
+        userId,
+        memoryId: newMemory._id,
+        chatEntryId: newChatEntry._id,
+      });
     }
 
-    console.log(`Fetching relevant memories...`);
-    // get filtered relevant user memories from DB
+    // Get relevant memories
     const relatedMemories = await fetchRelevantMemories(userId, message);
-    console.log(`Related memories found: ${relatedMemories.length}`);
 
-    console.log(`Fetching recent chat history for conversational context...`);
+    // Get recent chat context
     const recentChatEntries = await ChatEntry.find({ userId })
       .sort({ createdAt: -1 })
       .limit(CONVERSATION_CONTEXT_LIMIT)
       .lean();
 
-    console.log(
-      `Found ${recentChatEntries.length} recent chat entries for context`
-    );
-
     // Reverse to chronological order for proper conversation flow
     const orderedChatEntries = recentChatEntries.reverse();
 
-    console.log(`Getting RAG context`);
+    // Get RAG context
     const ragContext = await getRAGContext(embedding);
 
-    console.log(`Sending message to LLM`);
+    requestLogger.info("Context gathered for AI response", {
+      userId,
+      relatedMemoriesCount: relatedMemories.length,
+      recentChatsCount: orderedChatEntries.length,
+      hasRagContext: !!ragContext,
+    });
 
+    // Get AI response
+    const aiResponseStart = Date.now();
     const aiMessage = await getLLMResponse(
       message,
       relatedMemories,
       orderedChatEntries,
       ragContext
     );
-    console.log(
-      `LLM response received. Response length: ${aiMessage.length} characters`
-    );
+    const aiResponseDuration = Date.now() - aiResponseStart;
 
     //create and save ai response
-    console.log(`Creating AI response entry in database`);
     const aiChat = new ChatEntry({ userId, message: aiMessage, sender: "ai" });
     await aiChat.save();
 
-    console.log(
-      `AI chat entry created successfully. Entry ID: ${aiChat._id}\nSending response to user...`
-    );
+    requestLogger.info("AI response generated and saved", {
+      userId,
+      aiChatId: aiChat._id,
+      aiResponseLength: aiMessage.length,
+      aiResponseDuration: `${aiResponseDuration}ms`,
+      originalMessageId: newChatEntry._id,
+    });
+
     //todo maybe also return the newChatEntry and the memory if any
-    console.log("------ NEW CHAT ENTRY PROCESS COMPLETED SUCCESSFULLY ------");
     return res.status(201).json({ success: true, data: aiChat });
   } catch (error) {
-    console.error("------ NEW CHAT ENTRY PROCESS FAILED ------");
-    console.error(`Error type: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
-    console.error(`Request body: ${JSON.stringify(req.body)}`);
-    console.error(`Request user: ${JSON.stringify(req.user)}`);
+    requestLogger.error("New chat entry process error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+      requestBody: {
+        messageLength: req.body?.message?.length || 0,
+        sender: req.body?.sender,
+        hasMetadata: !!req.body?.metadata,
+      },
+    });
+
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -222,29 +217,46 @@ export const newChatEntry = async (req, res) => {
 };
 
 export const deleteChatEntries = async (req, res) => {
+  const requestLogger = req.logger || logger;
+
   try {
-    const { userId } = req.user._id;
-    console.log(`Deleting chat of user: ${userId}`);
+    const userId = req.user._id; // Fixed: was destructuring incorrectly
+
+    requestLogger.info("Chat deletion started", { userId });
+
     if (!userId) {
+      requestLogger.warn("Chat deletion failed - no userId");
       return res
         .status(400)
         .json({ success: false, error: "userId is required" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      requestLogger.warn("Chat deletion failed - invalid userId format", {
+        userId,
+      });
       return res
         .status(400)
         .json({ success: false, error: "Invalid userId format" });
     }
 
-    await ChatEntry.deleteMany({ userId: userId });
-    console.log(`Chat deleted succesfully`);
+    const deleteResult = await ChatEntry.deleteMany({ userId: userId });
+
+    requestLogger.info("Chat entries deleted successfully", {
+      userId,
+      deletedCount: deleteResult.deletedCount,
+    });
 
     return res
       .status(200)
       .json({ success: true, message: "All chat entries deleted" });
   } catch (error) {
-    console.error("Error deleting chat entries:", error);
+    requestLogger.error("Chat deletion error", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?._id,
+    });
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",
