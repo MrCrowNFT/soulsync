@@ -547,8 +547,13 @@ describe("Auth Controller - logout", () => {
     const errorMessage = "Database connection error";
     mockDeleteOne.mockRejectedValue(new Error(errorMessage));
 
-    // Mock console.error to avoid cluttering test output
-    console.error = jest.fn();
+    // Mock the logger instead of console.error
+    const mockLogger = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      info: jest.fn(),
+    };
+    req.logger = mockLogger;
 
     // Call the function
     await logout(req, res);
@@ -557,8 +562,13 @@ describe("Auth Controller - logout", () => {
     expect(RefreshToken.deleteOne).toHaveBeenCalledWith({
       token: "test-refresh-token",
     });
-    expect(console.error).toHaveBeenCalledWith(
-      `Error during logout: ${errorMessage}`
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      "Logout error",
+      expect.objectContaining({
+        error: errorMessage,
+        stack: expect.any(String),
+        userId: undefined, // or whatever you expect
+      })
     );
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
