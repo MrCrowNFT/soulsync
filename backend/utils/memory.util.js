@@ -1,6 +1,7 @@
 import nlp from "compromise";
 import Sentiment from "sentiment";
 import { Memory } from "../models/memory.model.js";
+import logger from "./logger.js";
 
 // sentiment analyzer
 const sentimentAnalyzer = new Sentiment();
@@ -9,12 +10,30 @@ const sentimentAnalyzer = new Sentiment();
  * Analyzes a user message to determine if it contains memory-worthy information
  * @param {string} userId - The user ID
  * @param {string} message - The message to analyze
+ * @param {Array} embedding - The message embedding
  * @returns {Promise<Memory|null>} - A Memory object or null if no memory was extracted
  */
 export const analyzeAndExtractMemory = async (userId, message, embedding) => {
+  const startTime = Date.now();
+
+  logger.info("Memory analysis started", {
+    userId,
+    messageLength: message?.length || 0,
+    hasEmbedding: !!embedding,
+    operation: "analyzeAndExtractMemory",
+  });
+
   try {
     // Process the message with compromise
+    const nlpStartTime = Date.now();
     const doc = nlp(message);
+    const nlpDuration = Date.now() - nlpStartTime;
+
+    logger.debug("NLP processing completed", {
+      userId,
+      nlpDuration: `${nlpDuration}ms`,
+      operation: "analyzeAndExtractMemory",
+    });
 
     // Initialize entities object
     const entities = {
@@ -44,7 +63,16 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
     });
 
     // Extract emotions using standalone sentiment analysis
+    const sentimentStartTime = Date.now();
     const sentimentResult = sentimentAnalyzer.analyze(message);
+    const sentimentDuration = Date.now() - sentimentStartTime;
+
+    logger.debug("Sentiment analysis completed", {
+      userId,
+      sentimentScore: sentimentResult.score,
+      sentimentDuration: `${sentimentDuration}ms`,
+      operation: "analyzeAndExtractMemory",
+    });
 
     if (sentimentResult.score > 2) {
       entities.emotions.push("positive");
@@ -81,7 +109,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       });
     });
 
-    // Extract likes 
+    // Extract likes
     doc.match("(like|love|enjoy) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 1) {
@@ -97,7 +125,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       }
     });
 
-    // Extract dislikes 
+    // Extract dislikes
     doc.match("(hate|dislike|can't stand) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 1) {
@@ -112,7 +140,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       }
     });
 
-    // Extract goals 
+    // Extract goals
     doc
       .match("(want to|going to|plan to|hope to|goal is to) *")
       .forEach((match) => {
@@ -144,7 +172,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
         }
       });
 
-    // Extract pets 
+    // Extract pets
     doc.match("(my|our) (dog|cat|pet) *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 2) {
@@ -159,7 +187,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       }
     });
 
-    // Extract hobbies 
+    // Extract hobbies
     doc.match("(hobby|interest|passion) is *").forEach((match) => {
       const terms = match.terms();
       if (terms.length > 2) {
@@ -174,7 +202,7 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       }
     });
 
-    // Extract personality traits 
+    // Extract personality traits
     doc.match("(i am|i'm) a *").forEach((match) => {
       const terms = match.terms();
       const startIndex =
@@ -211,13 +239,52 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
     // Limit topics to top 5
     entities.topics = entities.topics.slice(0, 5);
 
+    // Log extracted entities
+    const entityCounts = Object.entries(entities).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value.length;
+        return acc;
+      },
+      {}
+    );
+
+    logger.debug("Entity extraction completed", {
+      userId,
+      entityCounts,
+      totalEntities: Object.values(entities).reduce(
+        (sum, arr) => sum + arr.length,
+        0
+      ),
+      operation: "analyzeAndExtractMemory",
+    });
+
     // Check if we extracted any meaningful information
     const hasEntities = Object.values(entities).some((arr) => arr.length > 0);
-    if (!hasEntities) return null;
+    if (!hasEntities) {
+      const totalDuration = Date.now() - startTime;
+      logger.info("Memory analysis completed - no entities extracted", {
+        userId,
+        totalDuration: `${totalDuration}ms`,
+        reason: "no meaningful entities found",
+        operation: "analyzeAndExtractMemory",
+      });
+      return null;
+    }
 
     // Check for personal context - we only want to save personal memories
     const isPersonal = doc.has("(my|I|we|our|me)");
-    if (!isPersonal) return null;
+    if (!isPersonal) {
+      const totalDuration = Date.now() - startTime;
+      logger.info("Memory analysis completed - not personal", {
+        userId,
+        totalDuration: `${totalDuration}ms`,
+        reason: "message lacks personal context",
+        hasEntities: true,
+        entityCounts,
+        operation: "analyzeAndExtractMemory",
+      });
+      return null;
+    }
 
     // Create the memory object
     const newMemory = new Memory({
@@ -227,9 +294,27 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
       embedding: embedding,
     });
 
+    const totalDuration = Date.now() - startTime;
+    logger.info("Memory analysis completed successfully", {
+      userId,
+      totalDuration: `${totalDuration}ms`,
+      memoryCreated: true,
+      entityCounts,
+      sentimentScore: sentimentResult.score,
+      operation: "analyzeAndExtractMemory",
+    });
+
     return newMemory;
   } catch (error) {
-    console.error("Error in memory analysis:", error);
+    const totalDuration = Date.now() - startTime;
+    logger.error("Memory analysis failed", {
+      error: error.message,
+      stack: error.stack,
+      userId,
+      messageLength: message?.length || 0,
+      totalDuration: `${totalDuration}ms`,
+      operation: "analyzeAndExtractMemory",
+    });
     return null;
   }
 };
@@ -245,6 +330,8 @@ export const analyzeAndExtractMemory = async (userId, message, embedding) => {
  * @returns {Promise<Array>} - Array of relevant memory objects
  */
 export const fetchRelevantMemories = async (userId, message, options = {}) => {
+  const startTime = Date.now();
+
   // Default options
   const {
     minRelevanceScore = 1.5,
@@ -252,16 +339,28 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
     maxMemories = 3,
   } = options;
 
-  console.log("------ MEMORY RETRIEVAL STARTED ------");
-  console.log(`User ID: ${userId}`);
-  console.log(`Message: "${message}"`);
-  console.log(`Min relevance threshold: ${minRelevanceScore}`);
-  console.log(`Relative to best ratio: ${relativeToBestRatio}`);
+  logger.info("Memory retrieval started", {
+    userId,
+    messageLength: message?.length || 0,
+    options: {
+      minRelevanceScore,
+      relativeToBestRatio,
+      maxMemories,
+    },
+    operation: "fetchRelevantMemories",
+  });
 
   try {
     // Process the message with compromise
+    const nlpStartTime = Date.now();
     const doc = nlp(message);
-    console.log("NLP processing completed");
+    const nlpDuration = Date.now() - nlpStartTime;
+
+    logger.debug("NLP processing completed for memory retrieval", {
+      userId,
+      nlpDuration: `${nlpDuration}ms`,
+      operation: "fetchRelevantMemories",
+    });
 
     // Create a results array to track all potential matches with relevance scores
     let potentialMatches = [];
@@ -274,36 +373,47 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
       ...new Set([...nouns, ...doc.match("#Singular").out("array")]),
     ].filter((t) => t.length > 2);
 
-    console.log(
-      `Entities found - People: ${people.length}, Places: ${places.length}, Topics: ${topics.length}`
-    );
+    logger.debug("Entities extracted for memory search", {
+      userId,
+      peopleCount: people.length,
+      placesCount: places.length,
+      topicsCount: topics.length,
+      people: people.slice(0, 3), // Log first 3 for debugging
+      places: places.slice(0, 3),
+      topics: topics.slice(0, 5),
+      operation: "fetchRelevantMemories",
+    });
 
     // STEP 1: Entity-specific search
     const entityQueries = [];
 
     if (people.length > 0) {
-      console.log(`Searching for people: ${people.join(", ")}`);
       entityQueries.push({ userId, people: { $in: people } });
     }
 
     if (places.length > 0) {
-      console.log(`Searching for places: ${places.join(", ")}`);
       entityQueries.push({ userId, locations: { $in: places } });
     }
 
     if (topics.length > 0) {
-      console.log(`Searching for topics: ${topics.join(", ")}`);
       entityQueries.push({ userId, topics: { $in: topics } });
     }
 
     // Execute entity-specific search
     if (entityQueries.length > 0) {
-      console.log("Executing entity search query");
+      const entitySearchStart = Date.now();
       const entityResults = await Memory.find({ $or: entityQueries })
         .sort({ createdAt: -1 })
         .limit(10);
+      const entitySearchDuration = Date.now() - entitySearchStart;
 
-      console.log(`Entity search found ${entityResults.length} memories`);
+      logger.debug("Entity search completed", {
+        userId,
+        entitySearchDuration: `${entitySearchDuration}ms`,
+        resultCount: entityResults.length,
+        queryCount: entityQueries.length,
+        operation: "fetchRelevantMemories",
+      });
 
       entityResults.forEach((memory) => {
         // Calculate relevance score - higher priority for entity matches
@@ -342,8 +452,17 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
 
     // If we have search terms, use text search
     if (searchTerms.length > 0) {
+      const textSearchStart = Date.now();
       const searchString = searchTerms.join(" ");
-      console.log(`Text search using: ${searchString}`);
+
+      logger.debug("Starting text search", {
+        userId,
+        searchString:
+          searchString.substring(0, 100) +
+          (searchString.length > 100 ? "..." : ""),
+        searchTermsCount: searchTerms.length,
+        operation: "fetchRelevantMemories",
+      });
 
       const textSearchResults = await Memory.find(
         {
@@ -357,7 +476,14 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
         .sort({ score: { $meta: "textScore" } })
         .limit(10);
 
-      console.log(`Text search found ${textSearchResults.length} memories`);
+      const textSearchDuration = Date.now() - textSearchStart;
+
+      logger.debug("Text search completed", {
+        userId,
+        textSearchDuration: `${textSearchDuration}ms`,
+        resultCount: textSearchResults.length,
+        operation: "fetchRelevantMemories",
+      });
 
       textSearchResults.forEach((memory) => {
         // MongoDB text search already gives us a score, let's adapt it
@@ -381,8 +507,16 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
     }
 
     // STEP 3: Detect emotional content for emotion-based matching
+    const sentimentStartTime = Date.now();
     const sentimentResult = sentimentAnalyzer.analyze(message);
-    console.log(`Sentiment analysis score: ${sentimentResult.score}`);
+    const sentimentDuration = Date.now() - sentimentStartTime;
+
+    logger.debug("Sentiment analysis for memory retrieval", {
+      userId,
+      sentimentScore: sentimentResult.score,
+      sentimentDuration: `${sentimentDuration}ms`,
+      operation: "fetchRelevantMemories",
+    });
 
     let emotionQuery = null;
     let emotionType = "neutral";
@@ -402,12 +536,19 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
     }
 
     if (emotionQuery) {
-      console.log(`Searching for ${emotionType} emotional memories`);
+      const emotionSearchStart = Date.now();
       const emotionResults = await Memory.find(emotionQuery)
         .sort({ createdAt: -1 })
         .limit(5);
+      const emotionSearchDuration = Date.now() - emotionSearchStart;
 
-      console.log(`Emotion search found ${emotionResults.length} memories`);
+      logger.debug("Emotion search completed", {
+        userId,
+        emotionType,
+        emotionSearchDuration: `${emotionSearchDuration}ms`,
+        resultCount: emotionResults.length,
+        operation: "fetchRelevantMemories",
+      });
 
       emotionResults.forEach((memory) => {
         const emotionScore = 1.0; // Base score for emotion matches
@@ -454,6 +595,14 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
     // Sort by score (descending)
     uniqueMatches.sort((a, b) => b.score - a.score);
 
+    logger.debug("Memory deduplication and sorting completed", {
+      userId,
+      totalMatches: potentialMatches.length,
+      uniqueMatches: uniqueMatches.length,
+      duplicatesRemoved: potentialMatches.length - uniqueMatches.length,
+      operation: "fetchRelevantMemories",
+    });
+
     // STEP 5: Apply advanced relevance filtering
     let finalMatches = [];
 
@@ -465,10 +614,14 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
       // Calculate the effective threshold (take the higher of minimum and relative)
       const effectiveThreshold = Math.max(minRelevanceScore, relativeThreshold);
 
-      console.log(`Highest memory score: ${highestScore.toFixed(2)}`);
-      console.log(
-        `Effective relevance threshold: ${effectiveThreshold.toFixed(2)}`
-      );
+      logger.debug("Applying relevance filtering", {
+        userId,
+        highestScore: parseFloat(highestScore.toFixed(2)),
+        relativeThreshold: parseFloat(relativeThreshold.toFixed(2)),
+        effectiveThreshold: parseFloat(effectiveThreshold.toFixed(2)),
+        candidateCount: uniqueMatches.length,
+        operation: "fetchRelevantMemories",
+      });
 
       // Apply the threshold and take up to maxMemories
       finalMatches = uniqueMatches
@@ -477,33 +630,60 @@ export const fetchRelevantMemories = async (userId, message, options = {}) => {
     }
 
     // Log the selected memories with their scores
-    console.log(
-      `Selected ${finalMatches.length} memories after relevance filtering:`
-    );
+    const selectedMemoryDetails = finalMatches.map((match, idx) => ({
+      rank: idx + 1,
+      matchType: match.matchType,
+      score: parseFloat(match.score.toFixed(2)),
+      memoryPreview:
+        match.memory.memory.substring(0, 50) +
+        (match.memory.memory.length > 50 ? "..." : ""),
+      memoryId: match.memory._id.toString(),
+    }));
 
-    finalMatches.forEach((match, idx) => {
-      console.log(
-        `${idx + 1}. [${match.matchType}] Score: ${match.score.toFixed(2)} - ${
-          match.explanation
-        }`
-      );
-      console.log(`   Memory: "${match.memory.memory.substring(0, 50)}..."`);
+    const totalDuration = Date.now() - startTime;
+
+    logger.info("Memory retrieval completed", {
+      userId,
+      totalDuration: `${totalDuration}ms`,
+      selectedCount: finalMatches.length,
+      candidateCount: uniqueMatches.length,
+      searchStats: {
+        entityQueries: entityQueries.length,
+        textSearchTerms: searchTerms.length,
+        emotionType: emotionType !== "neutral" ? emotionType : null,
+      },
+      selectedMemories: selectedMemoryDetails,
+      operation: "fetchRelevantMemories",
     });
 
     // If no relevant memories were found, log this explicitly
     if (finalMatches.length === 0) {
-      console.log("No memories met the relevance threshold criteria");
+      logger.info("No memories met relevance threshold", {
+        userId,
+        totalDuration: `${totalDuration}ms`,
+        candidateCount: uniqueMatches.length,
+        thresholdUsed: minRelevanceScore,
+        operation: "fetchRelevantMemories",
+      });
     }
-
-    console.log("------ MEMORY RETRIEVAL COMPLETED ------");
 
     // Return only the Memory objects from matches above threshold
     return finalMatches.map((match) => match.memory);
   } catch (error) {
-    console.error("------ MEMORY RETRIEVAL FAILED ------");
-    console.error(`Error type: ${error.name}`);
-    console.error(`Error message: ${error.message}`);
-    console.error(`Error stack: ${error.stack}`);
+    const totalDuration = Date.now() - startTime;
+    logger.error("Memory retrieval failed", {
+      error: error.message,
+      stack: error.stack,
+      userId,
+      messageLength: message?.length || 0,
+      totalDuration: `${totalDuration}ms`,
+      options: {
+        minRelevanceScore,
+        relativeToBestRatio,
+        maxMemories,
+      },
+      operation: "fetchRelevantMemories",
+    });
     return [];
   }
 };
