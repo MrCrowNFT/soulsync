@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
+import { SendIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
 
@@ -35,7 +35,6 @@ const Chat: React.FC = () => {
         chatContainerRef.current.scrollHeight;
     }
   }, []);
-
 
   // Load chat history only once when component mounts if user is logged in
   useEffect(() => {
@@ -248,33 +247,26 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="flex w-full items-center gap-3">
-        {/* Attachments Button */}
-        <button
-          type="button"
-          className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-        >
-          <PaperclipIcon size={20} />
-        </button>
-
+      <form onSubmit={handleSubmit} className="flex w-full items-end gap-3">
         {/* Input Container */}
-        <div className="flex flex-grow items-center rounded-full border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
-          <ImageIcon
-            size={20}
-            className="mr-2 cursor-pointer text-gray-500 dark:text-gray-400"
-          />
-
-          <input
-            className="flex-grow rounded-full bg-transparent p-2 text-gray-700 outline-none dark:text-gray-100"
+        <div className="flex flex-grow items-end rounded-2xl border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
+          <textarea
+            className="flex-grow resize-none rounded-2xl bg-transparent p-2 text-gray-700 outline-none dark:text-gray-100 min-h-[40px] max-h-[120px] overflow-y-auto"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             disabled={isLoading}
+            rows={1}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = "auto";
+              target.style.height = Math.min(target.scrollHeight, 120) + "px";
+            }}
           />
 
           <SmileIcon
             size={20}
-            className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400"
+            className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400 mb-2"
           />
         </div>
 
