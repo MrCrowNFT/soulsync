@@ -253,10 +253,7 @@ const Chat: React.FC = () => {
 
         {/* Input Container */}
         <div className="flex flex-grow items-center rounded-full border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
-          <ImageIcon
-            size={20}
-            className="mr-2 cursor-pointer text-gray-500 dark:text-gray-400"
-          />
+          
 
           <input
             className="flex-grow rounded-full bg-transparent p-2 text-gray-700 outline-none dark:text-gray-100"
