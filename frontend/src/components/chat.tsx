@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { PaperclipIcon, SendIcon, ImageIcon, SmileIcon } from "lucide-react";
+import {  SendIcon, ImageIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
 
@@ -249,13 +249,7 @@ const Chat: React.FC = () => {
 
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="flex w-full items-center gap-3">
-        {/* Attachments Button */}
-        <button
-          type="button"
-          className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-        >
-          <PaperclipIcon size={20} />
-        </button>
+        
 
         {/* Input Container */}
         <div className="flex flex-grow items-center rounded-full border border-blue-300 bg-white px-4 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
