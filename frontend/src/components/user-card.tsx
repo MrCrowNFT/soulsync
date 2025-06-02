@@ -355,15 +355,7 @@ const UserCard: FunctionComponent = () => {
                     Edit Profile
                   </button>
 
-                  {/* Logout Button for larger screens */}
-                  <button
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="hidden md:flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-lg hover:bg-secondary/90 transition-colors duration-300 disabled:opacity-50"
-                  >
-                    <LogOut size={18} />
-                    {loggingOut ? "Logging out..." : "Logout"}
-                  </button>
+                  
                 </div>
               </div>
 
