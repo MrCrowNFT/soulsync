@@ -34,10 +34,13 @@ export const DEFAULT_FOOTER_CATEGORIES: FooterCategory[] = [
   {
     title: "Crisis Resources",
     links: [
-      { name: "Helplines", href: "/crisis/helplines" },
-      { name: "Support Groups", href: "/crisis/support" },
-      { name: "Emergency Contacts", href: "/crisis/emergency" },
-      { name: "Mental Health", href: "/crisis/mental-health" },
+      { name: "Helplines", href: "https://www.helpguide.org/find-help" },
+      { name: "Support Groups", href: "https://www.mentalhealth.org/" },
+      {
+        name: "Emergency Contacts",
+        href: "https://blog.opencounseling.com/suicide-hotlines/",
+      },
+      { name: "Mental Health", href: "https://www.nimh.nih.gov/health" },
     ],
   },
 ];
@@ -61,5 +64,4 @@ export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
   },
 ];
 
-export const DEFAUL_LOGO_COMPONENT="/mental-health-icon.svg"
- 
+export const DEFAUL_LOGO_COMPONENT = "/mental-health-icon.svg";
