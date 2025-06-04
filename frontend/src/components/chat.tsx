@@ -121,17 +121,17 @@ const Chat: React.FC = () => {
     });
   }, []);
 
-  const handleEmojiSelect = useCallback((emoji) => {
+  const handleEmojiSelect = useCallback((emoji: { native: string }) => {
     setInput((prev) => prev + emoji.native);
     setShowEmojiPicker(false);
   }, []);
 
   // Handle clicking outside emoji picker
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target)
+        !emojiPickerRef.current.contains(event.target as Node)
       ) {
         setShowEmojiPicker(false);
       }
