@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { SendIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 
 const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
@@ -9,10 +11,12 @@ const Chat: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [initialLoadComplete, setInitialLoadComplete] =
     useState<boolean>(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
   const chatFetchedRef = useRef<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   // Get profile data -> select each value individually to prevent unnecessary re-renders
   const username = useProfile((state) => state.username);
@@ -116,6 +120,31 @@ const Chat: React.FC = () => {
       minute: "2-digit",
     });
   }, []);
+
+  const handleEmojiSelect = useCallback((emoji) => {
+    setInput((prev) => prev + emoji.native);
+    setShowEmojiPicker(false);
+  }, []);
+
+  // Handle clicking outside emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   // If user is not logged in, show a interface with login prompt
   if (!username) {
@@ -264,10 +293,27 @@ const Chat: React.FC = () => {
             }}
           />
 
-          <SmileIcon
-            size={20}
-            className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400 mb-2"
-          />
+          <div className="relative">
+            <SmileIcon
+              size={20}
+              className="ml-2 cursor-pointer text-gray-500 dark:text-gray-400 mb-2"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            />
+
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="absolute bottom-full right-0 mb-2 z-50"
+              >
+                <Picker
+                  data={data}
+                  onEmojiSelect={handleEmojiSelect}
+                  theme="light"
+                  previewPosition="none"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Send Button */}
