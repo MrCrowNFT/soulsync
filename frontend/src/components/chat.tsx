@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { SendIcon, SmileIcon } from "lucide-react";
 import MoodTracker from "./mood-tracker";
 import { useProfile } from "@/hooks/use-profile";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import EmojiPicker from "emoji-picker-react";
 
 const Chat: React.FC = () => {
   const [input, setInput] = useState<string>("");
@@ -121,8 +120,8 @@ const Chat: React.FC = () => {
     });
   }, []);
 
-  const handleEmojiSelect = useCallback((emoji: { native: string }) => {
-    setInput((prev) => prev + emoji.native);
+  const handleEmojiSelect = useCallback((emojiData: { emoji: string }) => {
+    setInput((prev) => prev + emojiData.emoji);
     setShowEmojiPicker(false);
   }, []);
 
@@ -305,11 +304,10 @@ const Chat: React.FC = () => {
                 ref={emojiPickerRef}
                 className="absolute bottom-full right-0 mb-2 z-50"
               >
-                <Picker
-                  data={data}
-                  onEmojiSelect={handleEmojiSelect}
-                  theme="light"
-                  previewPosition="none"
+                <EmojiPicker
+                  onEmojiClick={handleEmojiSelect}
+                  width={300}
+                  height={400}
                 />
               </div>
             )}
