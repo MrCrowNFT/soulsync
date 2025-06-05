@@ -44,6 +44,7 @@ const UserCard: FunctionComponent = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleEditMode = () => {
     // Reset form data to current profile values when entering edit mode
@@ -58,6 +59,7 @@ const UserCard: FunctionComponent = () => {
     });
     setPassword("");
     setPreviewImage(null);
+    setSelectedFile(null);
     setEditMode(!editMode);
   };
 
@@ -74,14 +76,26 @@ const UserCard: FunctionComponent = () => {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // validate file type
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        alert(`Invalid file type. Allowed types: ${allowedTypes.join(", ")}`);
+        return;
+      }
+
+      // validate file size
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert("File too large. Maximum size is 5MB.");
+        return;
+      }
+
+      setSelectedFile(file);
+
+      // create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        const result = reader.result as string;
-        setPreviewImage(result);
-        setFormData((prev) => ({
-          ...prev,
-          photo: result,
-        }));
+        setPreviewImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -100,8 +114,9 @@ const UserCard: FunctionComponent = () => {
     if (formData.gender !== gender) payload.gender = formData.gender;
     if (formData.birthDate !== birthDate)
       payload.birthDate = formData.birthDate;
-    if (formData.photo !== photo || previewImage)
-      payload.photo = formData.photo;
+    if (selectedFile) {
+      payload.photo = selectedFile;
+    }
     if (password) payload.password = password;
 
     // Only call updateProfile if there are changes
@@ -124,7 +139,7 @@ const UserCard: FunctionComponent = () => {
       setLoggingOut(true);
       await logout();
       // Redirect to login page
-      window.location.href = "/login"; 
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -148,7 +163,7 @@ const UserCard: FunctionComponent = () => {
             {editMode ? (
               <div className="relative w-full h-full group">
                 <img
-                  src={previewImage || photo || defaulAvatar}
+                  src={previewImage || (typeof photo === 'string' ? photo : '') || defaulAvatar}
                   alt="user photo"
                   className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
                 />
@@ -167,7 +182,7 @@ const UserCard: FunctionComponent = () => {
               </div>
             ) : (
               <img
-                src={photo || defaulAvatar}
+                src={(typeof photo === 'string' ? photo : '') || defaulAvatar}
                 alt="User profile"
                 className="w-full h-full rounded-full object-cover border-4 border-accent shadow-md"
               />
@@ -354,8 +369,6 @@ const UserCard: FunctionComponent = () => {
                     <Edit3 size={18} />
                     Edit Profile
                   </button>
-
-                  
                 </div>
               </div>
 
