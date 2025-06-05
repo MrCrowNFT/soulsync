@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import logger from "../utils/logger.js";
+import { uploadImageToS3 } from "../utils/s3Uploader.util.js";
 
 //todo This functions is not currently needed, user profile is gotten from the login function so maybe just remove it
 /**
@@ -131,7 +132,8 @@ export const updateUser = async (req, res) => {
       updatedFields.push("birthDate");
     }
     if (photo) {
-      user.photo = photo;
+      const photoUrl = await uploadImageToS3(photo);
+      user.photo = photoUrl;
       updatedFields.push("photo");
     }
 
