@@ -67,16 +67,10 @@ export const updateUser = async (req, res) => {
 
   try {
     const userId = req.user._id;
-    const {
-      username,
-      password,
-      email,
-      name,
-      lastName,
-      gender,
-      birthDate,
-      photo,
-    } = req.body;
+    const { username, password, email, name, lastName, gender, birthDate } =
+      req.body;
+
+    const photo = req.file; 
 
     const fieldsToUpdate = Object.keys(req.body).filter(
       (key) => req.body[key] !== undefined

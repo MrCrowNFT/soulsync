@@ -28,7 +28,7 @@ type Profile = {
   gender: "male" | "female" | "non-binary" | "other" | "prefer-not-to-say";
   birthDate?: Date | null;
   email: string;
-  photo?: string |File;
+  photo?: string | File;
   moodData: formattedMoodData;
   chat: chatEntry[];
   memories: string[]; // Create a Memory type later
@@ -175,6 +175,7 @@ export const useProfile = create<Profile>()(
         }
       },
       //USER PROFILE
+      //todo should remove the optimistic update
       updateProfile: async (updatePayload: updateUserPayload) => {
         // Check if user is logged in
         if (!get()._id) {

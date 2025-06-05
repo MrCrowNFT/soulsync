@@ -36,6 +36,23 @@ const extractKeyFromUrl = (url) => {
 
 export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
   try {
+    // Validate environment variables
+    const requiredEnvVars = [
+      "AWS_BUCKET_NAME",
+      "AWS_REGION",
+      "AWS_ACCESS_KEY",
+      "AWS_SECRET_KEY",
+    ];
+    const missingEnvVars = requiredEnvVars.filter(
+      (varName) => !process.env[varName]
+    );
+
+    if (missingEnvVars.length > 0) {
+      throw new Error(
+        `Missing required environment variables: ${missingEnvVars.join(", ")}`
+      );
+    }
+
     // input validation
     if (!file || !file.buffer || !file.originalname || !file.mimetype) {
       throw new Error("Invalid file object");
@@ -82,12 +99,13 @@ export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
       Key: `profile-pictures/${filename}`,
       Body: file.buffer,
       ContentType: file.mimetype,
+      ACL: "public-read",
     };
 
     await s3.send(new PutObjectCommand(params));
 
     const region = process.env.AWS_REGION || "us-east-1";
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${region}.amazonaws.com/${filename}`;
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.${region}.amazonaws.com/profile-pictures/${filename}`;
   } catch (error) {
     console.error("S3 upload error:", error);
     throw error; // rethrow error
