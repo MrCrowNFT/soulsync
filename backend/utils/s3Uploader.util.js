@@ -99,7 +99,6 @@ export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
       Key: `profile-pictures/${filename}`,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: "public-read",
     };
 
     await s3.send(new PutObjectCommand(params));
