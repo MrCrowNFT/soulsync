@@ -2,6 +2,10 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
+// Constants 
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -12,26 +16,24 @@ const s3 = new S3Client({
 
 export const uploadImageToS3 = async (file) => {
   try {
-    //input validation
+    // input validation
     if (!file || !file.buffer || !file.originalname || !file.mimetype) {
       throw new Error("Invalid file object");
     }
 
     // type validation
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"]; //->should be a constant
-    if (!allowedTypes.includes(file.mimetype)) {
+    if (!ALLOWED_TYPES.includes(file.mimetype)) {
       throw new Error(
         `Invalid file type: ${
           file.mimetype
-        }. Allowed types: ${allowedTypes.join(", ")}`
+        }. Allowed types: ${ALLOWED_TYPES.join(", ")}`
       );
     }
 
     // size validation
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes ->should be a constant
-    if (file.buffer.length > maxSize) {
+    if (file.buffer.length > MAX_FILE_SIZE) {
       throw new Error(
-        `File too large: ${file.buffer.length} bytes. Max size: ${maxSize} bytes`
+        `File too large: ${file.buffer.length} bytes. Max size: ${MAX_FILE_SIZE} bytes`
       );
     }
 
@@ -47,11 +49,10 @@ export const uploadImageToS3 = async (file) => {
 
     await s3.send(new PutObjectCommand(params));
 
-    // url construction
     const region = process.env.AWS_REGION || "us-east-1";
     return `https://${process.env.AWS_BUCKET_NAME}.s3.${region}.amazonaws.com/${filename}`;
   } catch (error) {
     console.error("S3 upload error:", error);
-    throw new Error("Failed to upload image to S3");
+    throw error; // rethrow error
   }
 };
