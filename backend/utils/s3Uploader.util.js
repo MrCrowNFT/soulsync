@@ -34,7 +34,7 @@ const extractKeyFromUrl = (url) => {
   }
 };
 
-export const uploadImageToS3 = async (file) => {
+export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
   try {
     // input validation
     if (!file || !file.buffer || !file.originalname || !file.mimetype) {
@@ -55,6 +55,23 @@ export const uploadImageToS3 = async (file) => {
       throw new Error(
         `File too large: ${file.buffer.length} bytes. Max size: ${MAX_FILE_SIZE} bytes`
       );
+    }
+
+    //delete the old photo if exists
+    if (oldPhotoUrl) {
+      try {
+        const oldKey = extractKeyFromUrl(oldPhotoUrl);
+        if (oldKey) {
+          await s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: oldKey,
+            })
+          );
+        }
+      } catch (deleteError) {
+        console.warn("Failed to delete old photo:", deleteError.message);
+      }
     }
 
     const ext = path.extname(file.originalname);

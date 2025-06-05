@@ -133,7 +133,7 @@ export const updateUser = async (req, res) => {
     }
     if (photo) {
       try {
-        const photoUrl = await uploadImageToS3(photo);
+        const photoUrl = await uploadImageToS3(photo, user.photo);
         user.photo = photoUrl;
         updatedFields.push("photo");
       } catch (uploadError) {
