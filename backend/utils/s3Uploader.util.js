@@ -1,8 +1,12 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import {
+  PutObjectCommand,
+  DeleteObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
-// Constants 
+// Constants
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -13,6 +17,22 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_KEY,
   },
 });
+
+const extractKeyFromUrl = (url) => {
+  try {
+    if (!url) return null;
+    const urlParts = url.split(".amazonaws.com/");
+    if (urlParts.length < 2) return null;
+    let key = urlParts[1];
+    if (!key.startsWith("profile-pictures/")) {
+      key = `profile-pictures/${key}`;
+    }
+    return key;
+  } catch (error) {
+    console.error("Error extracting key from URL:", error);
+    return null;
+  }
+};
 
 export const uploadImageToS3 = async (file) => {
   try {
@@ -42,7 +62,7 @@ export const uploadImageToS3 = async (file) => {
 
     const params = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: filename,
+      Key: `profile-pictures/${filename}`,
       Body: file.buffer,
       ContentType: file.mimetype,
     };
