@@ -132,9 +132,18 @@ export const updateUser = async (req, res) => {
       updatedFields.push("birthDate");
     }
     if (photo) {
-      const photoUrl = await uploadImageToS3(photo);
-      user.photo = photoUrl;
-      updatedFields.push("photo");
+      try {
+        const photoUrl = await uploadImageToS3(photo);
+        user.photo = photoUrl;
+        updatedFields.push("photo");
+      } catch (uploadError) {
+        requestLogger.error("Photo upload failed", {
+          userId,
+          error: uploadError.message,
+        });
+        //either fail the entire update or continue without photo
+        throw new Error(`Photo upload failed: ${uploadError.message}`);
+      }
     }
 
     // Handle password separately to ensure it gets hashed
