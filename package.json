@@ -25,6 +25,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.1",
+    "multer": "^2.0.1",
     "nodemon": "^3.1.9",
     "openai": "^4.95.1",
     "pdf2json": "^3.1.6",
