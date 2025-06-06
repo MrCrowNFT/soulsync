@@ -175,33 +175,67 @@ export const useProfile = create<Profile>()(
         }
       },
       //USER PROFILE
-      //todo should remove the optimistic update
       updateProfile: async (updatePayload: updateUserPayload) => {
-        // Check if user is logged in
+        // check if user is logged in
         if (!get()._id) {
-          set({ error: "You must be logged in to chat" });
+          set({ error: "You must be logged in to update profile" });
           return false;
         }
+
         const previousState = { ...get() };
-        //optimistic update
+        let previewUrl: string | null = null;
+
+        // create optimistic update payload
+        const optimisticPayload = { ...updatePayload };
+
+        // handle photo optimistically - create preview URL if it's a File
+        if (updatePayload.photo && updatePayload.photo instanceof File) {
+          // create a preview url for immediate display
+          previewUrl = URL.createObjectURL(updatePayload.photo);
+          optimisticPayload.photo = previewUrl;
+        }
+
+        // optimistic update
         set((state) => ({
           ...state,
-          ...updatePayload,
+          ...optimisticPayload,
           isLoading: true,
           error: null,
         }));
+
         try {
-          await updateUser(updatePayload);
-          // Update succeeded, update timestamp
-          set((state) => ({
-            ...state,
-            updatedAt: new Date(),
-            isLoading: false,
-          }));
+          const response = await updateUser(updatePayload);
+
+          // update with the actual server response
+          if (response.success) {
+            set((state) => ({
+              ...state,
+              ...response.user,
+              updatedAt: new Date(),
+              isLoading: false,
+            }));
+          } else {
+            // if update failed, rollback to previous state
+            set({
+              ...previousState,
+              isLoading: false,
+              error: response.message || "Failed to update profile",
+            });
+          }
+
+          // clean up the preview url if we created one
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+          }
 
           return true;
         } catch (error) {
-          // Rollback if API call fails
+          // clean up the preview url on error
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+          }
+
+          // rollback if api call fail
           set({
             ...previousState,
             isLoading: false,
