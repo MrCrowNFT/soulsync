@@ -21,7 +21,7 @@ export interface updateUserPayload {
   lastName?: string;
   gender?: "male" | "female" | "non-binary" | "other" | "prefer-not-to-say";
   birthDate?: Date;
-  photo?: string;
+  photo?: string | File;
 }
 
 export interface updateUserResponse {

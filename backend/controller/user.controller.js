@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import logger from "../utils/logger.js";
+import { uploadImageToS3 } from "../utils/s3Uploader.util.js";
 
 //todo This functions is not currently needed, user profile is gotten from the login function so maybe just remove it
 /**
@@ -66,16 +67,10 @@ export const updateUser = async (req, res) => {
 
   try {
     const userId = req.user._id;
-    const {
-      username,
-      password,
-      email,
-      name,
-      lastName,
-      gender,
-      birthDate,
-      photo,
-    } = req.body;
+    const { username, password, email, name, lastName, gender, birthDate } =
+      req.body;
+
+    const photo = req.file; 
 
     const fieldsToUpdate = Object.keys(req.body).filter(
       (key) => req.body[key] !== undefined
@@ -131,8 +126,18 @@ export const updateUser = async (req, res) => {
       updatedFields.push("birthDate");
     }
     if (photo) {
-      user.photo = photo;
-      updatedFields.push("photo");
+      try {
+        const photoUrl = await uploadImageToS3(photo, user.photo);
+        user.photo = photoUrl;
+        updatedFields.push("photo");
+      } catch (uploadError) {
+        requestLogger.error("Photo upload failed", {
+          userId,
+          error: uploadError.message,
+        });
+        //either fail the entire update or continue without photo
+        throw new Error(`Photo upload failed: ${uploadError.message}`);
+      }
     }
 
     // Handle password separately to ensure it gets hashed
