@@ -21,9 +21,23 @@ const s3 = new S3Client({
 const extractKeyFromUrl = (url) => {
   try {
     if (!url) return null;
-    const urlParts = url.split(".amazonaws.com/");
-    if (urlParts.length < 2) return null;
-    let key = urlParts[1];
+
+    // handle both S3 and CloudFront urls
+    let key;
+    if (url.includes(".cloudfront.net/")) {
+      // cloudFront url
+      const urlParts = url.split(".cloudfront.net/");
+      if (urlParts.length < 2) return null;
+      key = urlParts[1];
+    } else if (url.includes(".amazonaws.com/")) {
+      // s3 url
+      const urlParts = url.split(".amazonaws.com/");
+      if (urlParts.length < 2) return null;
+      key = urlParts[1];
+    } else {
+      return null;
+    }
+
     if (!key.startsWith("profile-pictures/")) {
       key = `profile-pictures/${key}`;
     }
@@ -42,6 +56,7 @@ export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
       "AWS_REGION",
       "AWS_ACCESS_KEY",
       "AWS_SECRET_KEY",
+      "CLOUDFRONT_DOMAIN_NAME",
     ];
     const missingEnvVars = requiredEnvVars.filter(
       (varName) => !process.env[varName]
@@ -103,10 +118,11 @@ export const uploadImageToS3 = async (file, oldPhotoUrl = null) => {
 
     await s3.send(new PutObjectCommand(params));
 
-    const region = process.env.AWS_REGION || "us-east-1";
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${region}.amazonaws.com/profile-pictures/${filename}`;
+    // Return CloudFront URL instead of S3 URL
+    const cloudFrontUrl = process.env.CLOUDFRONT_DOMAIN_NAME;
+    return `https://${cloudFrontUrl}/profile-pictures/${filename}`;
   } catch (error) {
     console.error("S3 upload error:", error);
-    throw error; // rethrow error
+    throw error;
   }
 };
